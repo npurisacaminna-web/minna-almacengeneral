@@ -30,7 +30,7 @@
             margin-bottom: 15px; 
             box-shadow: 0 4px 10px rgba(126, 87, 194, 0.2); 
         }
-        header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         header p { margin: 6px 0 0 0; color: #f3e5f5; font-size: 13px; font-weight: 500; }
 
         .main-container { display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 1400px; margin: 0 auto; }
@@ -88,8 +88,8 @@
         @media(min-width: 500px) { .btn-excel { width: auto; } }
         .btn-excel:hover { background: #1b5e20; }
 
-        .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
-        .tab-btn { background: #ede7f6; color: #546e7a; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; flex: 1; text-align: center; }
+        .tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
+        .tab-btn { background: #ede7f6; color: #546e7a; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; flex: 1; min-width: 70px; text-align: center; }
         .tab-btn.active { background: var(--minna-dark-purple); color: white; }
 
         .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
@@ -124,7 +124,7 @@
 <body>
 
     <header>
-        <h1>🌸 MINNA S.A.C. - Control de Almacén e Inventario</h1>
+        <h1>💜 MINNA S.A.C. - Control de Almacén e Inventario</h1>
         <p>Expertos en K-Beauty | Sincronización en Vivo</p>
     </header>
 
@@ -146,6 +146,7 @@
                     <button type="button" class="tab-btn active" onclick="setTipoOperacion('Recepción', this)">Recepción</button>
                     <button type="button" class="tab-btn" onclick="setTipoOperacion('Despacho', this)">Despacho</button>
                     <button type="button" class="tab-btn" onclick="setTipoOperacion('Traslado', this)">Traslado</button>
+                    <button type="button" class="tab-btn" onclick="setTipoOperacion('Devolución', this)">Devolución</button>
                     <button type="button" class="tab-btn" onclick="setTipoOperacion('Merma', this)">Merma</button>
                 </div>
             </div>
@@ -203,9 +204,9 @@
                     </div>
                 </div>
 
-                <!-- SELECTOR DE SUCURSAL PARA DESPACHO -->
+                <!-- SELECTOR DE SUCURSAL (PARA DESPACHO Y DEVOLUCIÓN) -->
                 <div class="form-group" id="grupoSucursal" style="display: none;">
-                    <label>Sucursal de Despacho:</label>
+                    <label id="lblSucursal">Sucursal de Despacho:</label>
                     <select id="sucursalDespacho">
                         <option value="">Seleccione una sucursal...</option>
                         <option value="AREQUIPA">AREQUIPA</option>
@@ -251,7 +252,7 @@
         <div class="card">
             <h3>Estado del Sistema en Vivo</h3>
             <p style="font-size: 13px; color: #546e7a; line-height: 1.5;">
-                Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
+                Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado, devolución o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
             </p>
             <div style="margin-top: 30px; text-align: center;">
                 <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
@@ -419,13 +420,15 @@
             const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
             const inputTraslado = document.getElementById('ubicacionTraslado');
             const grupoSucursal = document.getElementById('grupoSucursal');
+            const lblSucursal = document.getElementById('lblSucursal');
             const selectSucursal = document.getElementById('sucursalDespacho');
             const grupoCausa = document.getElementById('grupoCausa');
             const selectCausa = document.getElementById('causaMerma');
 
-            if (tipo === 'Despacho') {
+            if (tipo === 'Despacho' || tipo === 'Devolución') {
                 grupoSucursal.style.display = 'block';
                 selectSucursal.required = true;
+                lblSucursal.innerText = tipo === 'Despacho' ? 'Sucursal de Despacho:' : 'Sucursal de Devolución (Origen):';
                 grupoTraslado.style.display = 'none';
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
@@ -516,7 +519,7 @@
             const thDetalle = document.getElementById('thDetalle');
             const thCausa = document.getElementById('thCausa');
             
-            const hayDetalles = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma' || m.Operacion === 'Despacho');
+            const hayDetalles = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma' || m.Operacion === 'Despacho' || m.Operacion === 'Devolución');
             const hayCausas = historialArray.some(m => m.Operacion === 'Merma');
 
             thDetalle.style.display = hayDetalles ? '' : 'none';
@@ -529,7 +532,7 @@
                 let detalleTexto = '-';
                 if (mov.Operacion === 'Traslado' || mov.Operacion === 'Merma') {
                     detalleTexto = mov.Ubicacion_Traslado || '-';
-                } else if (mov.Operacion === 'Despacho') {
+                } else if (mov.Operacion === 'Despacho' || mov.Operacion === 'Devolución') {
                     detalleTexto = mov.Sucursal || '-';
                 }
 
@@ -597,7 +600,7 @@
             const tipoOp = document.getElementById('tipoOperacionVal').value;
             const ubicacionVal = document.getElementById('ubicacion').value;
             const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
-            const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value : '';
+            const sucursalVal = (tipoOp === 'Despacho' || tipoOp === 'Devolución') ? document.getElementById('sucursalDespacho').value : '';
             const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
 
             const movimiento = {
