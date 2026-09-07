@@ -6,318 +6,6 @@
     <title>Minna SAC - Kardex & Sincronización en Vivo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-    
-    <!-- Firebase SDKs y lógica global -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDKEWqcxKax47LMctLzViN2nZMYQJGCQ",
-            authDomain: "minnaalmacengeneral.firebaseapp.com",
-            projectId: "minnaalmacengeneral",
-            storageBucket: "minnaalmacengeneral.appspot.com",
-            messagingSenderId: "72362177084",
-            appId: "1:72362177084:web:8b73ee95ec281c3842c939",
-            measurementId: "G-B49T04TD6P"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        let maestroSkuDb = {};
-        let historialArray = [];
-        let html5QrCode = null;
-        let destinoEscaneo = '';
-
-        window.onload = function() {
-            const savedDb = localStorage.getItem('minna_maestro_db');
-            if (savedDb) {
-                maestroSkuDb = JSON.parse(savedDb);
-                const totalProds = Object.keys(maestroSkuDb).length;
-                document.getElementById('statusMaestro').innerText = `Maestro cargado (${totalProds} productos)`;
-                document.getElementById('statusMaestro').style.color = '#10b981';
-            }
-
-            const q = query(collection(db, "movimientos"));
-            onSnapshot(q, (snapshot) => {
-                historialArray = [];
-                snapshot.forEach((doc) => {
-                    historialArray.push({ id: doc.id, ...doc.data() });
-                });
-                renderizarHistorial();
-            });
-        };
-
-        window.cargarMaestroExcel = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
-                
-                maestroSkuDb = {};
-                rows.forEach(row => {
-                    const keys = Object.keys(row);
-                    let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "";
-
-                    keys.forEach(k => {
-                        const kLower = k.toLowerCase().trim();
-                        if (kLower.includes("código de barras") || kLower.includes("codigo de barras") || kLower.includes("barcode")) barcode = String(row[k] || '');
-                        if (kLower === "sku") sku = String(row[k] || '');
-                        if (kLower === "producto") producto = String(row[k] || '');
-                        if (kLower === "variante") variante = String(row[k] || '');
-                        if (kLower.includes("tipo")) tipo = String(row[k] || '');
-                        if (kLower === "marca") marca = String(row[k] || '');
-                    });
-
-                    barcode = barcode.trim();
-                    sku = sku.trim();
-
-                    if(barcode || sku) {
-                        const key = barcode ? barcode : sku;
-                        maestroSkuDb[key] = {
-                            barcode: barcode,
-                            sku: sku,
-                            producto: producto.trim(),
-                            variante: variante.trim(),
-                            tipo: tipo.trim(),
-                            marca: marca.trim()
-                        };
-                    }
-                });
-
-                localStorage.setItem('minna_maestro_db', JSON.stringify(maestroSkuDb));
-                const totalProds = Object.keys(maestroSkuDb).length;
-                const status = document.getElementById('statusMaestro');
-                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos)`;
-                status.style.color = '#10b981';
-            };
-            reader.readAsArrayBuffer(file);
-        };
-
-        window.filtrarSugerencias = function(texto) {
-            const box = document.getElementById('sugerenciasBox');
-            box.innerHTML = '';
-            
-            const queryVal = texto.trim().toLowerCase();
-            if (!queryVal) {
-                box.style.display = 'none';
-                return;
-            }
-
-            if (maestroSkuDb[queryVal]) {
-                seleccionarProducto(maestroSkuDb[queryVal]);
-                box.style.display = 'none';
-                return;
-            }
-
-            let matches = 0;
-            for (const key in maestroSkuDb) {
-                const item = maestroSkuDb[key];
-                const matchBarcode = item.barcode.toLowerCase().includes(queryVal);
-                const matchSku = item.sku.toLowerCase().includes(queryVal);
-                const matchProd = item.producto.toLowerCase().includes(queryVal);
-
-                if (matchBarcode || matchSku || matchProd) {
-                    matches++;
-                    if (matches > 10) break;
-
-                    const div = document.createElement('div');
-                    div.className = 'suggestion-item';
-                    div.innerHTML = `<span><strong>${item.sku}</strong> - ${item.producto} (${item.variante || 'S/V'})</span> <small style="color:#64748b;">${item.barcode}</small>`;
-                    div.onclick = function() {
-                        seleccionarProducto(item);
-                        box.style.display = 'none';
-                    };
-                    box.appendChild(div);
-                }
-            }
-
-            box.style.display = matches > 0 ? 'block' : 'none';
-        };
-
-        function seleccionarProducto(item) {
-            document.getElementById('inputBusqueda').value = item.barcode || item.sku;
-            document.getElementById('skuFinal').value = item.sku;
-            document.getElementById('nombreProducto').value = item.producto;
-            document.getElementById('varProducto').value = item.variante || '-';
-            document.getElementById('tipoProductoVal').value = item.tipo || '-';
-            document.getElementById('marcaProducto').value = item.marca || '-';
-        }
-
-        window.setTipoOperacion = function(tipo, element) {
-            document.getElementById('tipoOperacionVal').value = tipo;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
-
-            const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
-            const inputTraslado = document.getElementById('ubicacionTraslado');
-            const grupoCausa = document.getElementById('grupoCausa');
-            const selectCausa = document.getElementById('causaMerma');
-
-            if (tipo === 'Traslado') {
-                grupoTraslado.style.display = 'block';
-                inputTraslado.readOnly = false;
-                inputTraslado.value = '';
-                inputTraslado.placeholder = 'Ej. B-03';
-                grupoCausa.style.display = 'none';
-                selectCausa.required = false;
-            } else if (tipo === 'Merma') {
-                grupoTraslado.style.display = 'block';
-                inputTraslado.readOnly = true;
-                inputTraslado.value = 'Merma666';
-                grupoCausa.style.display = 'block';
-                selectCausa.required = true;
-            } else {
-                grupoTraslado.style.display = 'none';
-                inputTraslado.readOnly = false;
-                inputTraslado.value = '';
-                grupoCausa.style.display = 'none';
-                selectCausa.required = false;
-            }
-        };
-
-        window.iniciarEscanner = function(destino) {
-            destinoEscaneo = destino;
-            document.getElementById('modalScanner').style.display = 'flex';
-
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-
-            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                config, 
-                onScanSuccess, 
-                () => {}
-            ).catch(err => {
-                alert("No se pudo acceder a la cámara. Revisa permisos o conexión HTTPS.");
-                window.cerrarEscanner();
-            });
-        };
-
-        function onScanSuccess(decodedText) {
-            window.cerrarEscanner();
-            if (destinoEscaneo === 'producto') {
-                document.getElementById('inputBusqueda').value = decodedText;
-                window.filtrarSugerencias(decodedText);
-            } else if (destinoEscaneo === 'ubicacion') {
-                document.getElementById('ubicacion').value = decodedText;
-            }
-        }
-
-        window.cerrarEscanner = function() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('modalScanner').style.display = 'none';
-                }).catch(() => {
-                    document.getElementById('modalScanner').style.display = 'none';
-                });
-            } else {
-                document.getElementById('modalScanner').style.display = 'none';
-            }
-        };
-
-        window.registrarMovimiento = async function(event) {
-            event.preventDefault();
-            const sku = document.getElementById('skuFinal').value;
-            
-            if (!sku) {
-                alert('Selecciona o escanea un producto válido primero.');
-                return;
-            }
-
-            const tipoOp = document.getElementById('tipoOperacionVal').value;
-            const ubicacionVal = document.getElementById('ubicacion').value;
-            const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
-            const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
-
-            const movimiento = {
-                Fecha: new Date().toLocaleString(),
-                Timestamp: Date.now(),
-                Operacion: tipoOp,
-                Barcode: document.getElementById('inputBusqueda').value,
-                SKU: sku,
-                Producto: document.getElementById('nombreProducto').value,
-                Variante: document.getElementById('varProducto').value,
-                Tipo: document.getElementById('tipoProductoVal').value,
-                Marca: document.getElementById('marcaProducto').value,
-                Ubicacion: ubicacionVal,
-                Ubicacion_Traslado: ubicacionTrasladoVal,
-                Causa: causaVal,
-                Cantidad: parseInt(document.getElementById('cantidad').value),
-                Responsable: document.getElementById('responsable').value
-            };
-
-            try {
-                await addDoc(collection(db, "movimientos"), movimiento);
-                
-                document.getElementById('opForm').reset();
-                document.getElementById('skuFinal').value = '';
-                document.getElementById('nombreProducto').value = '';
-                document.getElementById('varProducto').value = '';
-                document.getElementById('tipoProductoVal').value = '';
-                document.getElementById('marcaProducto').value = '';
-                window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
-            } catch (error) {
-                alert("Error al registrar en la nube: " + error.message);
-            }
-        };
-
-        function renderizarHistorial() {
-            const tbody = document.querySelector('#tablaHistorial tbody');
-            const thTraslado = document.getElementById('thTraslado');
-            const thCausa = document.getElementById('thCausa');
-            
-            const hayTraslados = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma');
-            const hayCausas = historialArray.some(m => m.Operacion === 'Merma');
-
-            thTraslado.style.display = hayTraslados ? '' : 'none';
-            thCausa.style.display = hayCausas ? '' : 'none';
-
-            historialArray.sort((a, b) => (b.Timestamp || 0) - (a.Timestamp || 0));
-
-            tbody.innerHTML = '';
-            historialArray.forEach(mov => {
-                const tdTrasladoHtml = hayTraslados ? `<td>${mov.Ubicacion_Traslado || '-'}</td>` : '';
-                const tdCausaHtml = hayCausas ? `<td>${mov.Causa || '-'}</td>` : '';
-
-                const row = `<tr>
-                    <td>${mov.Fecha}</td>
-                    <td><strong>${mov.Operacion}</strong></td>
-                    <td>${mov.Barcode}</td>
-                    <td><strong>${mov.SKU}</strong></td>
-                    <td>${mov.Producto}</td>
-                    <td>${mov.Variante}</td>
-                    <td>${mov.Tipo}</td>
-                    <td>${mov.Marca}</td>
-                    <td>${mov.Ubicacion}</td>
-                    ${tdTrasladoHtml}
-                    ${tdCausaHtml}
-                    <td><strong>${mov.Cantidad}</strong></td>
-                    <td>${mov.Responsable}</td>
-                </tr>`;
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-        }
-
-        window.exportarExcel = function() {
-            if (historialArray.length === 0) {
-                alert('No hay movimientos registrados para exportar.');
-                return;
-            }
-            const worksheet = XLSX.utils.json_to_sheet(historialArray);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos_Kardex");
-            XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
-        };
-    </script>
 
     <style>
         :root {
@@ -587,5 +275,323 @@
             <button type="button" class="btn-close-scanner" onclick="cerrarEscanner()">Cancelar / Cerrar</button>
         </div>
     </div>
+
+    <!-- Lógica de Cámara y UI Global -->
+    <script>
+        let maestroSkuDb = {};
+        let historialArray = [];
+        let html5QrCode = null;
+        let destinoEscaneo = '';
+
+        window.onload = function() {
+            const savedDb = localStorage.getItem('minna_maestro_db');
+            if (savedDb) {
+                maestroSkuDb = JSON.parse(savedDb);
+                const totalProds = Object.keys(maestroSkuDb).length;
+                document.getElementById('statusMaestro').innerText = `Maestro cargado (${totalProds} productos)`;
+                document.getElementById('statusMaestro').style.color = '#10b981';
+            }
+        };
+
+        window.cargarMaestroExcel = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
+                
+                maestroSkuDb = {};
+                rows.forEach(row => {
+                    const keys = Object.keys(row);
+                    let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "";
+
+                    keys.forEach(k => {
+                        const kLower = k.toLowerCase().trim();
+                        if (kLower.includes("código de barras") || kLower.includes("codigo de barras") || kLower.includes("barcode")) barcode = String(row[k] || '');
+                        if (kLower === "sku") sku = String(row[k] || '');
+                        if (kLower === "producto") producto = String(row[k] || '');
+                        if (kLower === "variante") variante = String(row[k] || '');
+                        if (kLower.includes("tipo")) tipo = String(row[k] || '');
+                        if (kLower === "marca") marca = String(row[k] || '');
+                    });
+
+                    barcode = barcode.trim();
+                    sku = sku.trim();
+
+                    if(barcode || sku) {
+                        const key = barcode ? barcode : sku;
+                        maestroSkuDb[key] = {
+                            barcode: barcode,
+                            sku: sku,
+                            producto: producto.trim(),
+                            variante: variante.trim(),
+                            tipo: tipo.trim(),
+                            marca: marca.trim()
+                        };
+                    }
+                });
+
+                localStorage.setItem('minna_maestro_db', JSON.stringify(maestroSkuDb));
+                const totalProds = Object.keys(maestroSkuDb).length;
+                const status = document.getElementById('statusMaestro');
+                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos)`;
+                status.style.color = '#10b981';
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        window.filtrarSugerencias = function(texto) {
+            const box = document.getElementById('sugerenciasBox');
+            box.innerHTML = '';
+            
+            const queryVal = texto.trim().toLowerCase();
+            if (!queryVal) {
+                box.style.display = 'none';
+                return;
+            }
+
+            if (maestroSkuDb[queryVal]) {
+                seleccionarProducto(maestroSkuDb[queryVal]);
+                box.style.display = 'none';
+                return;
+            }
+
+            let matches = 0;
+            for (const key in maestroSkuDb) {
+                const item = maestroSkuDb[key];
+                const matchBarcode = item.barcode.toLowerCase().includes(queryVal);
+                const matchSku = item.sku.toLowerCase().includes(queryVal);
+                const matchProd = item.producto.toLowerCase().includes(queryVal);
+
+                if (matchBarcode || matchSku || matchProd) {
+                    matches++;
+                    if (matches > 10) break;
+
+                    const div = document.createElement('div');
+                    div.className = 'suggestion-item';
+                    div.innerHTML = `<span><strong>${item.sku}</strong> - ${item.producto} (${item.variante || 'S/V'})</span> <small style="color:#64748b;">${item.barcode}</small>`;
+                    div.onclick = function() {
+                        seleccionarProducto(item);
+                        box.style.display = 'none';
+                    };
+                    box.appendChild(div);
+                }
+            }
+
+            box.style.display = matches > 0 ? 'block' : 'none';
+        };
+
+        function seleccionarProducto(item) {
+            document.getElementById('inputBusqueda').value = item.barcode || item.sku;
+            document.getElementById('skuFinal').value = item.sku;
+            document.getElementById('nombreProducto').value = item.producto;
+            document.getElementById('varProducto').value = item.variante || '-';
+            document.getElementById('tipoProductoVal').value = item.tipo || '-';
+            document.getElementById('marcaProducto').value = item.marca || '-';
+        }
+
+        window.setTipoOperacion = function(tipo, element) {
+            document.getElementById('tipoOperacionVal').value = tipo;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            element.classList.add('active');
+
+            const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
+            const inputTraslado = document.getElementById('ubicacionTraslado');
+            const grupoCausa = document.getElementById('grupoCausa');
+            const selectCausa = document.getElementById('causaMerma');
+
+            if (tipo === 'Traslado') {
+                grupoTraslado.style.display = 'block';
+                inputTraslado.readOnly = false;
+                inputTraslado.value = '';
+                inputTraslado.placeholder = 'Ej. B-03';
+                grupoCausa.style.display = 'none';
+                selectCausa.required = false;
+            } else if (tipo === 'Merma') {
+                grupoTraslado.style.display = 'block';
+                inputTraslado.readOnly = true;
+                inputTraslado.value = 'Merma666';
+                grupoCausa.style.display = 'block';
+                selectCausa.required = true;
+            } else {
+                grupoTraslado.style.display = 'none';
+                inputTraslado.readOnly = false;
+                inputTraslado.value = '';
+                grupoCausa.style.display = 'none';
+                selectCausa.required = false;
+            }
+        };
+
+        window.iniciarEscanner = function(destino) {
+            destinoEscaneo = destino;
+            document.getElementById('modalScanner').style.display = 'flex';
+
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config, 
+                onScanSuccess, 
+                () => {}
+            ).catch(err => {
+                alert("No se pudo acceder a la cámara. Revisa permisos o conexión HTTPS.");
+                window.cerrarEscanner();
+            });
+        };
+
+        function onScanSuccess(decodedText) {
+            window.cerrarEscanner();
+            if (destinoEscaneo === 'producto') {
+                document.getElementById('inputBusqueda').value = decodedText;
+                window.filtrarSugerencias(decodedText);
+            } else if (destinoEscaneo === 'ubicacion') {
+                document.getElementById('ubicacion').value = decodedText;
+            }
+        }
+
+        window.cerrarEscanner = function() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('modalScanner').style.display = 'none';
+                }).catch(() => {
+                    document.getElementById('modalScanner').style.display = 'none';
+                });
+            } else {
+                document.getElementById('modalScanner').style.display = 'none';
+            }
+        };
+
+        window.exportarExcel = function() {
+            if (historialArray.length === 0) {
+                alert('No hay movimientos registrados para exportar.');
+                return;
+            }
+            const worksheet = XLSX.utils.json_to_sheet(historialArray);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos_Kardex");
+            XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
+        };
+
+        window.renderizarHistorialGlobal = function(dataArray) {
+            historialArray = dataArray;
+            const tbody = document.querySelector('#tablaHistorial tbody');
+            const thTraslado = document.getElementById('thTraslado');
+            const thCausa = document.getElementById('thCausa');
+            
+            const hayTraslados = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma');
+            const hayCausas = historialArray.some(m => m.Operacion === 'Merma');
+
+            thTraslado.style.display = hayTraslados ? '' : 'none';
+            thCausa.style.display = hayCausas ? '' : 'none';
+
+            historialArray.sort((a, b) => (b.Timestamp || 0) - (a.Timestamp || 0));
+
+            tbody.innerHTML = '';
+            historialArray.forEach(mov => {
+                const tdTrasladoHtml = hayTraslados ? `<td>${mov.Ubicacion_Traslado || '-'}</td>` : '';
+                const tdCausaHtml = hayCausas ? `<td>${mov.Causa || '-'}</td>` : '';
+
+                const row = `<tr>
+                    <td>${mov.Fecha}</td>
+                    <td><strong>${mov.Operacion}</strong></td>
+                    <td>${mov.Barcode}</td>
+                    <td><strong>${mov.SKU}</strong></td>
+                    <td>${mov.Producto}</td>
+                    <td>${mov.Variante}</td>
+                    <td>${mov.Tipo}</td>
+                    <td>${mov.Marca}</td>
+                    <td>${mov.Ubicacion}</td>
+                    ${tdTrasladoHtml}
+                    ${tdCausaHtml}
+                    <td><strong>${mov.Cantidad}</strong></td>
+                    <td>${mov.Responsable}</td>
+                </tr>`;
+                tbody.insertAdjacentHTML('beforeend', row);
+            });
+        };
+    </script>
+
+    <!-- Lógica independiente de Firebase -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDKEWqcxKax47LMctLzViN2nZMYQJGCQ",
+            authDomain: "minnaalmacengeneral.firebaseapp.com",
+            projectId: "minnaalmacengeneral",
+            storageBucket: "minnaalmacengeneral.appspot.com",
+            messagingSenderId: "72362177084",
+            appId: "1:72362177084:web:8b73ee95ec281c3842c939",
+            measurementId: "G-B49T04TD6P"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const q = query(collection(db, "movimientos"));
+        onSnapshot(q, (snapshot) => {
+            const tempArray = [];
+            snapshot.forEach((doc) => {
+                tempArray.push({ id: doc.id, ...doc.data() });
+            });
+            if (typeof window.renderizarHistorialGlobal === 'function') {
+                window.renderizarHistorialGlobal(tempArray);
+            }
+        });
+
+        window.registrarMovimiento = async function(event) {
+            event.preventDefault();
+            const sku = document.getElementById('skuFinal').value;
+            
+            if (!sku) {
+                alert('Selecciona o escanea un producto válido primero.');
+                return;
+            }
+
+            const tipoOp = document.getElementById('tipoOperacionVal').value;
+            const ubicacionVal = document.getElementById('ubicacion').value;
+            const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
+            const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
+
+            const movimiento = {
+                Fecha: new Date().toLocaleString(),
+                Timestamp: Date.now(),
+                Operacion: tipoOp,
+                Barcode: document.getElementById('inputBusqueda').value,
+                SKU: sku,
+                Producto: document.getElementById('nombreProducto').value,
+                Variante: document.getElementById('varProducto').value,
+                Tipo: document.getElementById('tipoProductoVal').value,
+                Marca: document.getElementById('marcaProducto').value,
+                Ubicacion: ubicacionVal,
+                Ubicacion_Traslado: ubicacionTrasladoVal,
+                Causa: causaVal,
+                Cantidad: parseInt(document.getElementById('cantidad').value),
+                Responsable: document.getElementById('responsable').value
+            };
+
+            try {
+                await addDoc(collection(db, "movimientos"), movimiento);
+                
+                document.getElementById('opForm').reset();
+                document.getElementById('skuFinal').value = '';
+                document.getElementById('nombreProducto').value = '';
+                document.getElementById('varProducto').value = '';
+                document.getElementById('tipoProductoVal').value = '';
+                document.getElementById('marcaProducto').value = '';
+                window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
+            } catch (error) {
+                alert("Error al registrar en la nube: " + error.message);
+            }
+        };
+    </script>
 </body>
 </html>
