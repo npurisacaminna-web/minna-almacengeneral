@@ -88,6 +88,9 @@
         @media(min-width: 500px) { .btn-excel { width: auto; } }
         .btn-excel:hover { background: #1b5e20; }
 
+        .btn-delete { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .btn-delete:hover { background: #ffcdd2; }
+
         .tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
         .tab-btn { background: #ede7f6; color: #546e7a; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; flex: 1; min-width: 70px; text-align: center; }
         .tab-btn.active { background: var(--minna-dark-purple); color: white; }
@@ -204,7 +207,6 @@
                     </div>
                 </div>
 
-                <!-- SELECTOR DE SUCURSAL (PARA DESPACHO Y DEVOLUCIÓN) -->
                 <div class="form-group" id="grupoSucursal" style="display: none;">
                     <label id="lblSucursal">Sucursal de Despacho:</label>
                     <select id="sucursalDespacho">
@@ -278,6 +280,7 @@
                             <th id="thCausa" style="display: none;">Causa</th>
                             <th>Cant.</th>
                             <th>Responsable</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -294,7 +297,6 @@
         </div>
     </div>
 
-    <!-- Lógica de Cámara y UI Global -->
     <script>
         let maestroSkuDb = {};
         let historialArray = [];
@@ -507,7 +509,8 @@
                 alert('No hay movimientos registrados para exportar.');
                 return;
             }
-            const worksheet = XLSX.utils.json_to_sheet(historialArray);
+            const dataToExport = historialArray.map(({id, Timestamp, ...rest}) => rest);
+            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos_Kardex");
             XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
@@ -553,16 +556,16 @@
                     ${tdCausaHtml}
                     <td><strong>${mov.Cantidad}</strong></td>
                     <td>${mov.Responsable}</td>
+                    <td><button class="btn-delete" onclick="solicitarEliminacion('${mov.id}')" title="Eliminar registro">🗑️</button></td>
                 </tr>`;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
         };
     </script>
 
-    <!-- Lógica independiente de Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDKEWqcxKax47LMctLzViN2nZMYQJGCQ",
@@ -580,8 +583,8 @@
         const q = query(collection(db, "movimientos"));
         onSnapshot(q, (snapshot) => {
             const tempArray = [];
-            snapshot.forEach((doc) => {
-                tempArray.push({ id: doc.id, ...doc.data() });
+            snapshot.forEach((docItem) => {
+                tempArray.push({ id: docItem.id, ...docItem.data() });
             });
             if (typeof window.renderizarHistorialGlobal === 'function') {
                 window.renderizarHistorialGlobal(tempArray);
@@ -633,6 +636,26 @@
                 window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
             } catch (error) {
                 alert("Error al registrar en la nube: " + error.message);
+            }
+        };
+
+        window.solicitarEliminacion = async function(idDoc) {
+            const pinIngresado = prompt("🔒 Ingresa tu PIN para eliminar este registro:");
+            
+            if (pinIngresado === null) return; 
+
+            // PIN configurado como texto (ahora acepta "NRYS" o "nrys")
+            const PIN_SECRETO = "NRYS";
+
+            if (pinIngresado.trim().toUpperCase() === PIN_SECRETO) {
+                try {
+                    await deleteDoc(doc(db, "movimientos", idDoc));
+                    alert("🗑️ Registro eliminado correctamente.");
+                } catch (error) {
+                    alert("Error al eliminar de la nube: " + error.message);
+                }
+            } else {
+                alert("❌ PIN incorrecto. No se pudo eliminar el registro.");
             }
         };
     </script>
