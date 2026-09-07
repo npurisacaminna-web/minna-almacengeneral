@@ -149,7 +149,6 @@
                     <button type="button" class="tab-btn active" onclick="setTipoOperacion('Recepción', this)">Recepción</button>
                     <button type="button" class="tab-btn" onclick="setTipoOperacion('Despacho', this)">Despacho</button>
                     <button type="button" class="tab-btn" onclick="setTipoOperacion('Traslado', this)">Traslado</button>
-                    <button type="button" class="tab-btn" onclick="setTipoOperacion('Devolución', this)">Devolución</button>
                     <button type="button" class="tab-btn" onclick="setTipoOperacion('Merma', this)">Merma</button>
                 </div>
             </div>
@@ -207,10 +206,11 @@
                     </div>
                 </div>
 
+                <!-- SELECTOR DE SUCURSAL / DEVOLUCIÓN -->
                 <div class="form-group" id="grupoSucursal" style="display: none;">
-                    <label id="lblSucursal">Sucursal de Despacho:</label>
+                    <label id="lblSucursal">Sucursal / Destino:</label>
                     <select id="sucursalDespacho">
-                        <option value="">Seleccione una sucursal...</option>
+                        <option value="">Seleccione una sucursal o devolución...</option>
                         <option value="AREQUIPA">AREQUIPA</option>
                         <option value="Chiclayo">Chiclayo</option>
                         <option value="Independencia">Independencia</option>
@@ -219,6 +219,7 @@
                         <option value="San Miguel">San Miguel</option>
                         <option value="SANTA ANITA">SANTA ANITA</option>
                         <option value="TRUJILLO">TRUJILLO</option>
+                        <option value="DEVOLUCIÓN DE TIENDA">DEVOLUCIÓN (Retorno a Almacén)</option>
                     </select>
                 </div>
 
@@ -254,7 +255,7 @@
         <div class="card">
             <h3>Estado del Sistema en Vivo</h3>
             <p style="font-size: 13px; color: #546e7a; line-height: 1.5;">
-                Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado, devolución o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
+                Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
             </p>
             <div style="margin-top: 30px; text-align: center;">
                 <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
@@ -297,6 +298,7 @@
         </div>
     </div>
 
+    <!-- Lógica general de la interfaz -->
     <script>
         let maestroSkuDb = {};
         let historialArray = [];
@@ -422,15 +424,13 @@
             const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
             const inputTraslado = document.getElementById('ubicacionTraslado');
             const grupoSucursal = document.getElementById('grupoSucursal');
-            const lblSucursal = document.getElementById('lblSucursal');
             const selectSucursal = document.getElementById('sucursalDespacho');
             const grupoCausa = document.getElementById('grupoCausa');
             const selectCausa = document.getElementById('causaMerma');
 
-            if (tipo === 'Despacho' || tipo === 'Devolución') {
+            if (tipo === 'Despacho') {
                 grupoSucursal.style.display = 'block';
                 selectSucursal.required = true;
-                lblSucursal.innerText = tipo === 'Despacho' ? 'Sucursal de Despacho:' : 'Sucursal de Devolución (Origen):';
                 grupoTraslado.style.display = 'none';
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
@@ -522,7 +522,7 @@
             const thDetalle = document.getElementById('thDetalle');
             const thCausa = document.getElementById('thCausa');
             
-            const hayDetalles = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma' || m.Operacion === 'Despacho' || m.Operacion === 'Devolución');
+            const hayDetalles = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma' || m.Operacion === 'Despacho');
             const hayCausas = historialArray.some(m => m.Operacion === 'Merma');
 
             thDetalle.style.display = hayDetalles ? '' : 'none';
@@ -535,7 +535,7 @@
                 let detalleTexto = '-';
                 if (mov.Operacion === 'Traslado' || mov.Operacion === 'Merma') {
                     detalleTexto = mov.Ubicacion_Traslado || '-';
-                } else if (mov.Operacion === 'Despacho' || mov.Operacion === 'Devolución') {
+                } else if (mov.Operacion === 'Despacho') {
                     detalleTexto = mov.Sucursal || '-';
                 }
 
@@ -556,13 +556,14 @@
                     ${tdCausaHtml}
                     <td><strong>${mov.Cantidad}</strong></td>
                     <td>${mov.Responsable}</td>
-                    <td><button class="btn-delete" onclick="solicitarEliminacion('${mov.id}')" title="Eliminar registro">🗑️</button></td>
+                    <td><button class="btn-delete" onclick="window.solicitarEliminacion('${mov.id}')" title="Eliminar registro">🗑️</button></td>
                 </tr>`;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
         };
     </script>
 
+    <!-- Lógica de Firebase en módulo y expuesta a window -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -603,7 +604,7 @@
             const tipoOp = document.getElementById('tipoOperacionVal').value;
             const ubicacionVal = document.getElementById('ubicacion').value;
             const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
-            const sucursalVal = (tipoOp === 'Despacho' || tipoOp === 'Devolución') ? document.getElementById('sucursalDespacho').value : '';
+            const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value : '';
             const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
 
             const movimiento = {
@@ -644,7 +645,6 @@
             
             if (pinIngresado === null) return; 
 
-            // PIN configurado como texto (ahora acepta "NRYS" o "nrys")
             const PIN_SECRETO = "NRYS";
 
             if (pinIngresado.trim().toUpperCase() === PIN_SECRETO) {
