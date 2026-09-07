@@ -3,58 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minna SAC - Kardex & Sincronización en Vivo</title>
+    <title>Minna S.A.C. - Control de Almacén K-Beauty</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
         :root {
-            --minna-blue: #0b2545;
-            --minna-orange: #d97706;
-            --bg-gray: #f8fafc;
-            --card-border: #e2e8f0;
-            --success: #10b981;
-            --text-dark: #1e293b;
+            --minna-purple: #7e57c2;
+            --minna-dark-purple: #5e35b1;
+            --minna-accent: #ab47bc;
+            --bg-gray: #f9f8fb;
+            --card-border: #ede7f6;
+            --success: #2e7d32;
+            --text-dark: #37474f;
         }
 
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-gray); color: var(--text-dark); margin: 0; padding: 15px; }
         
         header { 
-            background: var(--minna-blue); 
+            background: linear-gradient(135deg, var(--minna-purple), var(--minna-dark-purple)); 
             color: white; 
-            padding: 15px; 
-            border-radius: 10px; 
+            padding: 20px; 
+            border-radius: 12px; 
             text-align: center; 
             margin-bottom: 15px; 
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); 
+            box-shadow: 0 4px 10px rgba(126, 87, 194, 0.2); 
         }
-        header h1 { margin: 0; font-size: 20px; }
-        header p { margin: 5px 0 0 0; color: #cbd5e1; font-size: 12px; }
+        header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; }
+        header p { margin: 6px 0 0 0; color: #f3e5f5; font-size: 13px; font-weight: 500; }
 
         .main-container { display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 1400px; margin: 0 auto; }
         @media(min-width: 900px) {
             .main-container { grid-template-columns: 1fr 1fr; }
         }
 
-        .card { background: white; padding: 15px; border-radius: 10px; border: 1px solid var(--card-border); box-shadow: 0 2px 4px rgba(0,0,0,0.05); position: relative; }
-        .card h3 { margin-top: 0; color: var(--minna-blue); border-bottom: 2px solid var(--minna-orange); padding-bottom: 8px; font-size: 15px; }
+        .card { background: white; padding: 18px; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 2px 6px rgba(0,0,0,0.04); position: relative; }
+        .card h3 { margin-top: 0; color: var(--minna-dark-purple); border-bottom: 2px solid var(--minna-accent); padding-bottom: 8px; font-size: 15px; }
 
         .form-row { display: grid; grid-template-columns: 1fr; gap: 10px; }
         @media(min-width: 500px) {
             .form-row { grid-template-columns: 1fr 1fr; }
         }
 
-        .form-group { margin-bottom: 10px; position: relative; }
+        .form-group { margin-bottom: 12px; position: relative; }
         
-        label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 12px; color: #475569; }
-        input, select { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; background-color: #fff; }
-        input:focus, select:focus { outline: none; border-color: var(--minna-orange); box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15); }
-        input[readonly] { background-color: #f1f5f9; color: #0f172a; font-weight: 600; }
+        label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 12px; color: #546e7a; }
+        input, select { width: 100%; padding: 9px; border: 1px solid #d1c4e9; border-radius: 6px; font-size: 13px; background-color: #fff; }
+        input:focus, select:focus { outline: none; border-color: var(--minna-accent); box-shadow: 0 0 0 3px rgba(171, 71, 188, 0.15); }
+        input[readonly] { background-color: #f3e5f5; color: #4a148c; font-weight: 600; border-color: #e1bee7; }
 
         .input-with-btn { display: flex; gap: 6px; }
-        .btn-scan { background: var(--minna-blue); color: white; border: none; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
-        .btn-scan:hover { background: #133b6b; }
+        .btn-scan { background: var(--minna-purple); color: white; border: none; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+        .btn-scan:hover { background: var(--minna-dark-purple); }
 
         .suggestions-box {
             position: absolute;
@@ -62,7 +63,7 @@
             left: 0;
             right: 0;
             background: white;
-            border: 1px solid #cbd5e1;
+            border: 1px solid #d1c4e9;
             border-top: none;
             border-radius: 0 0 6px 6px;
             max-height: 200px;
@@ -74,27 +75,27 @@
             padding: 10px;
             cursor: pointer;
             font-size: 12px;
-            border-bottom: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f9f8fb;
             display: flex;
             justify-content: space-between;
         }
-        .suggestion-item:hover { background-color: #fff7ed; color: var(--minna-orange); }
+        .suggestion-item:hover { background-color: #f3e5f5; color: var(--minna-dark-purple); }
 
-        .btn-primary { background: var(--minna-orange); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 14px; margin-top: 10px; }
-        .btn-primary:hover { background: #b45309; }
+        .btn-primary { background: var(--minna-dark-purple); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 14px; margin-top: 10px; }
+        .btn-primary:hover { background: #4a148c; }
 
         .btn-excel { background: var(--success); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; width: 100%; }
         @media(min-width: 500px) { .btn-excel { width: auto; } }
-        .btn-excel:hover { background: #059669; }
+        .btn-excel:hover { background: #1b5e20; }
 
         .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
-        .tab-btn { background: #e2e8f0; color: #475569; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; flex: 1; text-align: center; }
-        .tab-btn.active { background: var(--minna-blue); color: white; }
+        .tab-btn { background: #ede7f6; color: #546e7a; border: none; padding: 8px 4px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; flex: 1; text-align: center; }
+        .tab-btn.active { background: var(--minna-dark-purple); color: white; }
 
         .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
-        th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-        th { background-color: #f1f5f9; color: var(--minna-blue); font-weight: 700; }
+        th, td { padding: 8px; border-bottom: 1px solid #ede7f6; text-align: left; }
+        th { background-color: #f3e5f5; color: var(--minna-dark-purple); font-weight: 700; }
         .full-width { grid-column: 1 / -1; }
 
         #modalScanner {
@@ -111,20 +112,20 @@
         .scanner-container {
             background: white;
             padding: 15px;
-            border-radius: 10px;
+            border-radius: 12px;
             width: 100%;
             max-width: 400px;
             text-align: center;
         }
         #reader { width: 100%; border-radius: 6px; overflow: hidden; }
-        .btn-close-scanner { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
+        .btn-close-scanner { background: #e53935; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>MINNA S.A.C. - Control de Almacén e Inventario</h1>
-        <p>Sincronización en Vivo con Firebase Cloud</p>
+        <h1>🌸 MINNA S.A.C. - Control de Almacén e Inventario</h1>
+        <p>Expertos en K-Beauty | Sincronización en Vivo</p>
     </header>
 
     <div class="main-container">
@@ -133,8 +134,8 @@
             <h3>1. Cargar Excel Maestro de Productos</h3>
             <div class="form-group">
                 <label>Selecciona tu archivo de Excel (.xlsx / .xls):</label>
-                <input type="file" id="excelMaestroFile" accept=".xlsx, .xls" onchange="cargarMaestroExcel(event)" style="background: #f8fafc; padding: 6px;">
-                <small id="statusMaestro" style="color: #64748b; font-weight: 600; display: block; margin-top: 5px;">Esperando archivo Excel...</small>
+                <input type="file" id="excelMaestroFile" accept=".xlsx, .xls" onchange="cargarMaestroExcel(event)" style="background: #f9f8fb; padding: 6px;">
+                <small id="statusMaestro" style="color: #78909c; font-weight: 600; display: block; margin-top: 5px;">Esperando archivo Excel...</small>
             </div>
 
             <h3 style="margin-top: 20px;">2. Registrar Operación</h3>
@@ -202,6 +203,22 @@
                     </div>
                 </div>
 
+                <!-- SELECTOR DE SUCURSAL PARA DESPACHO -->
+                <div class="form-group" id="grupoSucursal" style="display: none;">
+                    <label>Sucursal de Despacho:</label>
+                    <select id="sucursalDespacho">
+                        <option value="">Seleccione una sucursal...</option>
+                        <option value="AREQUIPA">AREQUIPA</option>
+                        <option value="Chiclayo">Chiclayo</option>
+                        <option value="Independencia">Independencia</option>
+                        <option value="JOCKEY PLAZA">JOCKEY PLAZA</option>
+                        <option value="Miraflores">Miraflores</option>
+                        <option value="San Miguel">San Miguel</option>
+                        <option value="SANTA ANITA">SANTA ANITA</option>
+                        <option value="TRUJILLO">TRUJILLO</option>
+                    </select>
+                </div>
+
                 <div class="form-group" id="grupoCausa" style="display: none;">
                     <label>Causa de Merma:</label>
                     <select id="causaMerma">
@@ -233,7 +250,7 @@
 
         <div class="card">
             <h3>Estado del Sistema en Vivo</h3>
-            <p style="font-size: 13px; color: #475569; line-height: 1.5;">
+            <p style="font-size: 13px; color: #546e7a; line-height: 1.5;">
                 Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
             </p>
             <div style="margin-top: 30px; text-align: center;">
@@ -256,7 +273,7 @@
                             <th>Tipo</th>
                             <th>Marca</th>
                             <th>Ubicación</th>
-                            <th id="thTraslado" style="display: none;">Ubicación de traslado</th>
+                            <th id="thDetalle" style="display: none;">Detalle / Destino</th>
                             <th id="thCausa" style="display: none;">Causa</th>
                             <th>Cant.</th>
                             <th>Responsable</th>
@@ -270,7 +287,7 @@
 
     <div id="modalScanner">
         <div class="scanner-container">
-            <h4 style="margin-top:0; color:var(--minna-blue);">Apunta al código de barras</h4>
+            <h4 style="margin-top:0; color:var(--minna-dark-purple);">Apunta al código de barras</h4>
             <div id="reader"></div>
             <button type="button" class="btn-close-scanner" onclick="cerrarEscanner()">Cancelar / Cerrar</button>
         </div>
@@ -289,7 +306,7 @@
                 maestroSkuDb = JSON.parse(savedDb);
                 const totalProds = Object.keys(maestroSkuDb).length;
                 document.getElementById('statusMaestro').innerText = `Maestro cargado (${totalProds} productos)`;
-                document.getElementById('statusMaestro').style.color = '#10b981';
+                document.getElementById('statusMaestro').style.color = '#2e7d32';
             }
         };
 
@@ -339,7 +356,7 @@
                 const totalProds = Object.keys(maestroSkuDb).length;
                 const status = document.getElementById('statusMaestro');
                 status.innerText = `¡Cargado con éxito! (${totalProds} productos listos)`;
-                status.style.color = '#10b981';
+                status.style.color = '#2e7d32';
             };
             reader.readAsArrayBuffer(file);
         };
@@ -373,7 +390,7 @@
 
                     const div = document.createElement('div');
                     div.className = 'suggestion-item';
-                    div.innerHTML = `<span><strong>${item.sku}</strong> - ${item.producto} (${item.variante || 'S/V'})</span> <small style="color:#64748b;">${item.barcode}</small>`;
+                    div.innerHTML = `<span><strong>${item.sku}</strong> - ${item.producto} (${item.variante || 'S/V'})</span> <small style="color:#78909c;">${item.barcode}</small>`;
                     div.onclick = function() {
                         seleccionarProducto(item);
                         box.style.display = 'none';
@@ -401,10 +418,21 @@
 
             const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
             const inputTraslado = document.getElementById('ubicacionTraslado');
+            const grupoSucursal = document.getElementById('grupoSucursal');
+            const selectSucursal = document.getElementById('sucursalDespacho');
             const grupoCausa = document.getElementById('grupoCausa');
             const selectCausa = document.getElementById('causaMerma');
 
-            if (tipo === 'Traslado') {
+            if (tipo === 'Despacho') {
+                grupoSucursal.style.display = 'block';
+                selectSucursal.required = true;
+                grupoTraslado.style.display = 'none';
+                inputTraslado.required = false;
+                grupoCausa.style.display = 'none';
+                selectCausa.required = false;
+            } else if (tipo === 'Traslado') {
+                grupoSucursal.style.display = 'none';
+                selectSucursal.required = false;
                 grupoTraslado.style.display = 'block';
                 inputTraslado.readOnly = false;
                 inputTraslado.value = '';
@@ -412,15 +440,18 @@
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
             } else if (tipo === 'Merma') {
+                grupoSucursal.style.display = 'none';
+                selectSucursal.required = false;
                 grupoTraslado.style.display = 'block';
                 inputTraslado.readOnly = true;
                 inputTraslado.value = 'Merma666';
                 grupoCausa.style.display = 'block';
                 selectCausa.required = true;
             } else {
+                grupoSucursal.style.display = 'none';
+                selectSucursal.required = false;
                 grupoTraslado.style.display = 'none';
-                inputTraslado.readOnly = false;
-                inputTraslado.value = '';
+                inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
             }
@@ -482,20 +513,27 @@
         window.renderizarHistorialGlobal = function(dataArray) {
             historialArray = dataArray;
             const tbody = document.querySelector('#tablaHistorial tbody');
-            const thTraslado = document.getElementById('thTraslado');
+            const thDetalle = document.getElementById('thDetalle');
             const thCausa = document.getElementById('thCausa');
             
-            const hayTraslados = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma');
+            const hayDetalles = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma' || m.Operacion === 'Despacho');
             const hayCausas = historialArray.some(m => m.Operacion === 'Merma');
 
-            thTraslado.style.display = hayTraslados ? '' : 'none';
+            thDetalle.style.display = hayDetalles ? '' : 'none';
             thCausa.style.display = hayCausas ? '' : 'none';
 
             historialArray.sort((a, b) => (b.Timestamp || 0) - (a.Timestamp || 0));
 
             tbody.innerHTML = '';
             historialArray.forEach(mov => {
-                const tdTrasladoHtml = hayTraslados ? `<td>${mov.Ubicacion_Traslado || '-'}</td>` : '';
+                let detalleTexto = '-';
+                if (mov.Operacion === 'Traslado' || mov.Operacion === 'Merma') {
+                    detalleTexto = mov.Ubicacion_Traslado || '-';
+                } else if (mov.Operacion === 'Despacho') {
+                    detalleTexto = mov.Sucursal || '-';
+                }
+
+                const tdDetalleHtml = hayDetalles ? `<td>${detalleTexto}</td>` : '';
                 const tdCausaHtml = hayCausas ? `<td>${mov.Causa || '-'}</td>` : '';
 
                 const row = `<tr>
@@ -508,7 +546,7 @@
                     <td>${mov.Tipo}</td>
                     <td>${mov.Marca}</td>
                     <td>${mov.Ubicacion}</td>
-                    ${tdTrasladoHtml}
+                    ${tdDetalleHtml}
                     ${tdCausaHtml}
                     <td><strong>${mov.Cantidad}</strong></td>
                     <td>${mov.Responsable}</td>
@@ -559,6 +597,7 @@
             const tipoOp = document.getElementById('tipoOperacionVal').value;
             const ubicacionVal = document.getElementById('ubicacion').value;
             const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
+            const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value : '';
             const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
 
             const movimiento = {
@@ -573,6 +612,7 @@
                 Marca: document.getElementById('marcaProducto').value,
                 Ubicacion: ubicacionVal,
                 Ubicacion_Traslado: ubicacionTrasladoVal,
+                Sucursal: sucursalVal,
                 Causa: causaVal,
                 Cantidad: parseInt(document.getElementById('cantidad').value),
                 Responsable: document.getElementById('responsable').value
