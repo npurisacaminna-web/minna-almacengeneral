@@ -7,12 +7,11 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     
-    <!-- Firebase SDKs (Modular) -->
+    <!-- Firebase SDKs y lógica global -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addTimestamp, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // Configuración de Firebase obtenida de tu consola
         const firebaseConfig = {
             apiKey: "AIzaSyDKEWqcxKax47LMctLzViN2nZMYQJGCQ",
             authDomain: "minnaalmacengeneral.firebaseapp.com",
@@ -40,7 +39,6 @@
                 document.getElementById('statusMaestro').style.color = '#10b981';
             }
 
-            // Escuchar cambios en tiempo real desde Firebase Firestore
             const q = query(collection(db, "movimientos"));
             onSnapshot(q, (snapshot) => {
                 historialArray = [];
@@ -200,15 +198,15 @@
                 () => {}
             ).catch(err => {
                 alert("No se pudo acceder a la cámara. Revisa permisos o conexión HTTPS.");
-                cerrarEscanner();
+                window.cerrarEscanner();
             });
         };
 
         function onScanSuccess(decodedText) {
-            cerrarEscanner();
+            window.cerrarEscanner();
             if (destinoEscaneo === 'producto') {
                 document.getElementById('inputBusqueda').value = decodedText;
-                filtrarSugerencias(decodedText);
+                window.filtrarSugerencias(decodedText);
             } else if (destinoEscaneo === 'ubicacion') {
                 document.getElementById('ubicacion').value = decodedText;
             }
@@ -258,7 +256,6 @@
             };
 
             try {
-                // Guardar directamente en Firestore en la nube
                 await addDoc(collection(db, "movimientos"), movimiento);
                 
                 document.getElementById('opForm').reset();
@@ -267,7 +264,7 @@
                 document.getElementById('varProducto').value = '';
                 document.getElementById('tipoProductoVal').value = '';
                 document.getElementById('marcaProducto').value = '';
-                setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
+                window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
             } catch (error) {
                 alert("Error al registrar en la nube: " + error.message);
             }
@@ -284,7 +281,6 @@
             thTraslado.style.display = hayTraslados ? '' : 'none';
             thCausa.style.display = hayCausas ? '' : 'none';
 
-            // Ordenar por más reciente primero
             historialArray.sort((a, b) => (b.Timestamp || 0) - (a.Timestamp || 0));
 
             tbody.innerHTML = '';
