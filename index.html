@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minna SAC - Kardex & Buscador de Almacén</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <!-- Librería de Cámara / Escáner de Códigos -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
             --minna-blue: #0b2545;
@@ -50,6 +52,10 @@
         input:focus, select:focus { outline: none; border-color: var(--minna-orange); box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.15); }
         input[readonly] { background-color: #f1f5f9; color: #0f172a; font-weight: 600; }
 
+        .input-with-btn { display: flex; gap: 6px; }
+        .btn-scan { background: var(--minna-blue); color: white; border: none; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
+        .btn-scan:hover { background: #133b6b; }
+
         .suggestions-box {
             position: absolute;
             top: 100%;
@@ -90,13 +96,36 @@
         th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
         th { background-color: #f1f5f9; color: var(--minna-blue); font-weight: 700; }
         .full-width { grid-column: 1 / -1; }
+
+        /* Estilos del Modal de la Cámara */
+        #modalScanner {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            padding: 15px;
+        }
+        .scanner-container {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        #reader { width: 100%; border-radius: 6px; overflow: hidden; }
+        .btn-close-scanner { background: #ef4444; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>MINNA S.A.C. - Control de Almacén e Inventario</h1>
-        <p>Buscador Inteligente por Código de Barras / SKU / Nombre</p>
+        <p>Buscador Inteligente con Escáner de Cámara</p>
     </header>
 
     <div class="main-container">
@@ -126,7 +155,10 @@
 
                 <div class="form-group">
                     <label>Escanear Código de Barras o Escribir Producto / SKU:</label>
-                    <input type="text" id="inputBusqueda" placeholder="Escanea el código aquí o escribe..." oninput="filtrarSugerencias(this.value)" autocomplete="off" required>
+                    <div class="input-with-btn">
+                        <input type="text" id="inputBusqueda" placeholder="Escanea el código o escribe..." oninput="filtrarSugerencias(this.value)" autocomplete="off" required>
+                        <button type="button" class="btn-scan" onclick="iniciarEscanner('producto')">📷 Cámara</button>
+                    </div>
                     <div id="sugerenciasBox" class="suggestions-box" style="display: none;"></div>
                 </div>
 
@@ -160,7 +192,10 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Ubicación:</label>
-                        <input type="text" id="ubicacion" placeholder="Ej. A-01" required>
+                        <div class="input-with-btn">
+                            <input type="text" id="ubicacion" placeholder="Ej. A-01" required>
+                            <button type="button" class="btn-scan" onclick="iniciarEscanner('ubicacion')">📷 Cámara</button>
+                        </div>
                     </div>
                     <div class="form-group" id="grupoUbicacionTraslado" style="display: none;">
                         <label id="lblUbicacionTraslado">Ubicación de traslado:</label>
@@ -168,7 +203,6 @@
                     </div>
                 </div>
 
-                <!-- Campo de Causa (Solo visible en Merma) -->
                 <div class="form-group" id="grupoCausa" style="display: none;">
                     <label>Causa de Merma:</label>
                     <select id="causaMerma">
@@ -201,7 +235,7 @@
         <div class="card">
             <h3>Estado del Sistema</h3>
             <p style="font-size: 13px; color: #475569; line-height: 1.5;">
-                Selecciona la operación correspondiente. Si marcas <strong>Merma</strong>, el sistema asignará automáticamente la ubicación <strong>Merma666</strong> y te pedirá seleccionar la causa respectiva.
+                Ahora puedes usar el botón <strong>📷 Cámara</strong> en el buscador de productos o en la ubicación para escanear códigos de barras reales directamente con la cámara de tu celular.
             </p>
             <div style="margin-top: 30px; text-align: center;">
                 <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Movimientos en Excel</button>
@@ -235,9 +269,20 @@
         </div>
     </div>
 
+    <!-- Modal del Escáner de Cámara -->
+    <div id="modalScanner">
+        <div class="scanner-container">
+            <h4 style="margin-top:0; color:var(--minna-blue);">Apunta al código de barras</h4>
+            <div id="reader"></div>
+            <button type="button" class="btn-close-scanner" onclick="cerrarEscanner()">Cancelar / Cerrar</button>
+        </div>
+    </div>
+
     <script>
         let maestroSkuDb = {};
         let historialArray = [];
+        let html5QrCode = null;
+        let destinoEscaneo = '';
 
         window.onload = function() {
             const savedDb = localStorage.getItem('minna_maestro_db');
@@ -376,7 +421,7 @@
             } else if (tipo === 'Merma') {
                 grupoTraslado.style.display = 'block';
                 inputTraslado.readOnly = true;
-                inputTraslado.value = 'Merma666'; // Se llena automáticamente
+                inputTraslado.value = 'Merma666';
                 grupoCausa.style.display = 'block';
                 selectCausa.required = true;
             } else {
@@ -385,6 +430,53 @@
                 inputTraslado.value = '';
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
+            }
+        }
+
+        // --- Funciones del Escáner por Cámara ---
+        function iniciarEscanner(destino) {
+            destinoEscaneo = destino;
+            document.getElementById('modalScanner').style.display = 'flex';
+
+            if (!html5QrCode) {
+                html5QrCode = new Html5Qrcode("reader");
+            }
+
+            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+            html5QrCode.start(
+                { facingMode: "environment" }, 
+                config, 
+                onScanSuccess, 
+                onScanFailure
+            ).catch(err => {
+                alert("No se pudo acceder a la cámara. Asegúrate de dar permisos o usar HTTPS.");
+                cerrarEscanner();
+            });
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            cerrarEscanner();
+            if (destinoEscaneo === 'producto') {
+                document.getElementById('inputBusqueda').value = decodedText;
+                filtrarSugerencias(decodedText);
+            } else if (destinoEscaneo === 'ubicacion') {
+                document.getElementById('ubicacion').value = decodedText;
+            }
+        }
+
+        function onScanFailure(error) {
+            // Ignoramos errores de cuadros donde no hay código aún para no saturar
+        }
+
+        function cerrarEscanner() {
+            if (html5QrCode && html5QrCode.isScanning) {
+                html5QrCode.stop().then(() => {
+                    document.getElementById('modalScanner').style.display = 'none';
+                }).catch(err => {
+                    document.getElementById('modalScanner').style.display = 'none';
+                });
+            } else {
+                document.getElementById('modalScanner').style.display = 'none';
             }
         }
 
