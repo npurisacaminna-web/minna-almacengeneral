@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minna S.A.C. - Control de Almacén K-Beauty</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
@@ -158,56 +158,6 @@
         }
         .responsable-modal-box h2 { color: var(--minna-dark-purple); margin-top: 0; font-size: 19px; }
         .responsable-modal-box p { font-size: 13px; color: #546e7a; }
-
-        /* ============================================================
-           OPTIMIZACIÓN PARA CELULAR
-           Todo lo de arriba (y lo que ya aplica desde 900px / 500px)
-           se mantiene igual para escritorio. Este bloque solo ajusta
-           cosas para pantallas de celular (hasta 768px).
-        ============================================================ */
-        @media (max-width: 768px) {
-            body { padding: 10px; }
-
-            header { padding: 16px 14px; border-radius: 10px; }
-            header h1 { font-size: 18px; gap: 6px; }
-            header p { font-size: 12px; }
-            .responsable-badge span { font-size: 11px; padding: 5px 9px; }
-            .btn-cambiar-responsable { padding: 6px 10px; font-size: 11px; }
-
-            .card { padding: 14px; border-radius: 10px; }
-            .card h3 { font-size: 14px; }
-
-            /* Con 16px evitamos que el celular haga zoom automático al tocar un campo */
-            input, select { font-size: 16px; padding: 11px 10px; }
-            label { font-size: 12px; }
-
-            .btn-scan { min-width: 54px; font-size: 12px; padding: 0 10px; }
-
-            .tab-btn { padding: 10px 6px; font-size: 11px; min-height: 42px; }
-
-            .btn-primary, .btn-excel { padding: 14px; font-size: 15px; min-height: 48px; }
-            .btn-delete { padding: 8px 10px; font-size: 15px; }
-
-            .suggestion-item { padding: 12px 10px; font-size: 13px; }
-
-            /* El botón de Registrar queda "pegado" cerca del dedo mientras se llena el formulario */
-            #opForm .btn-primary {
-                position: sticky;
-                bottom: 10px;
-                box-shadow: 0 4px 14px rgba(94, 53, 177, 0.35);
-            }
-
-            .scanner-container { padding: 12px; border-radius: 10px; }
-            .btn-close-scanner { padding: 13px; font-size: 15px; }
-
-            .responsable-modal-box { padding: 20px; }
-            .responsable-modal-box h2 { font-size: 17px; }
-
-            /* Tabla: se puede deslizar con el dedo, con texto legible sin agrandar la tarjeta */
-            .table-responsive { -webkit-overflow-scrolling: touch; border-radius: 8px; }
-            table { font-size: 11px; }
-            th, td { padding: 9px 7px; }
-        }
     </style>
 </head>
 <body>
@@ -220,6 +170,18 @@
             <button type="button" class="btn-cambiar-responsable" onclick="abrirModalResponsable()">Cambiar</button>
         </div>
     </header>
+
+    <div id="modalPin" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(94, 53, 177, 0.97); z-index: 10001; justify-content: center; align-items: center; padding: 15px;">
+        <div class="responsable-modal-box">
+            <h2>🔒 Acceso Restringido</h2>
+            <p>Esta app es de uso interno de Minna S.A.C. Ingresa el PIN de acceso para continuar.</p>
+            <div class="form-group" style="text-align:left;">
+                <label>PIN de acceso:</label>
+                <input type="password" id="inputPinAcceso" placeholder="Ingresa el PIN..." autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault(); confirmarPinAcceso();}">
+            </div>
+            <button type="button" class="btn-primary" onclick="confirmarPinAcceso()">Ingresar ✅</button>
+        </div>
+    </div>
 
     <div id="modalResponsable">
         <div class="responsable-modal-box">
@@ -242,12 +204,7 @@
                 <label>Selecciona tu archivo de Excel (.xlsx / .xls):</label>
                 <input type="file" id="excelMaestroFile" accept=".xlsx, .xls" onchange="cargarMaestroExcel(event)" style="background: #f9f8fb; padding: 6px;">
                 <small id="statusMaestro" style="color: #78909c; font-weight: 600; display: block; margin-top: 5px;">Esperando archivo Excel...</small>
-            </div>
-
-            <div class="form-group">
-                <label>Stock Actual del Sistema (para calcular ERI de inventario):</label>
-                <input type="file" id="excelStockSistemaFile" accept=".xlsx, .xls" onchange="cargarStockSistemaExcel(event)" style="background: #f9f8fb; padding: 6px;">
-                <small id="statusStockSistema" style="color: #78909c; font-weight: 600; display: block; margin-top: 5px;">Esperando archivo de Stock Actual...</small>
+                <small style="color:#78909c; display:block; margin-top:4px;">Este mismo archivo carga los productos y el stock/costo del sistema (para el ERI). Ya no hace falta subirlo dos veces.</small>
             </div>
 
             <h3 style="margin-top: 20px;">2. Registrar Operación</h3>
@@ -304,11 +261,10 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Ubicación:</label>
-                        <div class="input-with-btn" id="contenedorUbicacionTexto">
+                        <div class="input-with-btn">
                             <input type="text" id="ubicacion" placeholder="Ej. A-01" required>
                             <button type="button" class="btn-scan" onclick="iniciarEscanner('ubicacion')">📷 Cámara</button>
                         </div>
-                        <select id="ubicacionDespacho" style="display: none;" aria-label="Ubicación de despacho" onchange="window.manejarCambioUbicacionDespacho(this)"></select>
                     </div>
                     <div class="form-group" id="grupoUbicacionTraslado" style="display: none;">
                         <label id="lblUbicacionTraslado">Ubicación de traslado:</label>
@@ -319,19 +275,19 @@
                 <!-- SELECTOR DE SUCURSAL / DESTINO (con autocompletado) -->
                 <div class="form-group" id="grupoSucursal" style="display: none;">
                     <label id="lblSucursal">Sucursal / Destino:</label>
-                    <input type="text" id="sucursalDespacho" list="listaSucursales" placeholder="Escribe o elige una sucursal..." autocomplete="off">
-                    <datalist id="listaSucursales">
-                        <option value="AREQUIPA">
-                        <option value="Chiclayo">
-                        <option value="Independencia">
-                        <option value="JOCKEY PLAZA">
-                        <option value="Miraflores">
-                        <option value="San Miguel">
-                        <option value="SANTA ANITA">
-                        <option value="TRUJILLO">
-                        <option value="DEVOLUCIÓN A PROVEEDOR">
-                        <option value="AJUSTE DE INVENTARIO">
-                    </datalist>
+                    <select id="sucursalDespacho">
+                        <option value="">Selecciona una sucursal...</option>
+                        <option value="AREQUIPA">AREQUIPA</option>
+                        <option value="Chiclayo">Chiclayo</option>
+                        <option value="Independencia">Independencia</option>
+                        <option value="JOCKEY PLAZA">JOCKEY PLAZA</option>
+                        <option value="Miraflores">Miraflores</option>
+                        <option value="San Miguel">San Miguel</option>
+                        <option value="SANTA ANITA">SANTA ANITA</option>
+                        <option value="TRUJILLO">TRUJILLO</option>
+                        <option value="DEVOLUCIÓN A PROVEEDOR">DEVOLUCIÓN A PROVEEDOR</option>
+                        <option value="AJUSTE DE INVENTARIO">AJUSTE DE INVENTARIO</option>
+                    </select>
                     <small style="color:#78909c; display:block; margin-top:4px;">¿Contaste mal el stock? Usa "AJUSTE DE INVENTARIO" para corregirlo con un despacho.</small>
                 </div>
 
@@ -384,6 +340,8 @@
                 <div style="margin-top: 15px; text-align: center; display: flex; flex-direction: column; gap: 10px;">
                     <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
                     <button class="btn-excel" style="background: var(--minna-dark-purple);" onclick="exportarInventarioERI()">📦 Descargar Inventario (Faltantes / Sobrantes / ERI)</button>
+                    <button class="btn-excel" style="background: var(--minna-accent);" onclick="exportarPickingHoy()">🚚 Descargar Picking de Hoy por Sucursal + Productividad</button>
+                    <button class="btn-excel" style="background: #ff8f00;" onclick="exportarGuiaHoy()">📄 Descargar Excel para Guía (Picking de Hoy)</button>
                 </div>
             </div>
         </div>
@@ -446,9 +404,6 @@
             const savedStockSistema = localStorage.getItem('minna_stock_sistema_db');
             if (savedStockSistema) {
                 stockSistemaDb = JSON.parse(savedStockSistema);
-                const totalSku = Object.keys(stockSistemaDb).length;
-                document.getElementById('statusStockSistema').innerText = `Stock del sistema cargado (${totalSku} SKUs)`;
-                document.getElementById('statusStockSistema').style.color = '#2e7d32';
             }
 
             // Cargar autocompletado de responsables guardados
@@ -460,8 +415,37 @@
                 document.getElementById('sucursalDespacho').value = ultimaSucursal;
             }
 
-            // Preguntar quién eres al ingresar a la app (aplica a todas las operaciones)
-            window.abrirModalResponsable();
+            // Primero pedir el PIN de acceso; recién ahí se pregunta el responsable
+            window.verificarAccesoPin();
+        };
+
+        // ---- PIN de acceso a la app ----
+        const PIN_ACCESO_APP = "MINNA2026";
+
+        window.verificarAccesoPin = function() {
+            if (sessionStorage.getItem('minna_pin_ok') === '1') {
+                window.abrirModalResponsable();
+                return;
+            }
+            document.getElementById('modalPin').style.display = 'flex';
+            setTimeout(() => {
+                const input = document.getElementById('inputPinAcceso');
+                if (input) input.focus();
+            }, 100);
+        };
+
+        window.confirmarPinAcceso = function() {
+            const pinInput = document.getElementById('inputPinAcceso');
+            const valor = (pinInput.value || '').trim().toUpperCase();
+            if (valor === PIN_ACCESO_APP) {
+                sessionStorage.setItem('minna_pin_ok', '1');
+                document.getElementById('modalPin').style.display = 'none';
+                window.abrirModalResponsable();
+            } else {
+                alert('❌ PIN incorrecto. No tienes acceso a esta app.');
+                pinInput.value = '';
+                pinInput.focus();
+            }
         };
 
         // ---- Autocompletado de Responsables (aprende con el uso) ----
@@ -518,6 +502,17 @@
             document.getElementById('modalResponsable').style.display = 'none';
         };
 
+        // Parsea número aunque venga como texto con comas o símbolos
+        function parseNumeroSeguro(valor) {
+            if (valor === null || valor === undefined || valor === '') return 0;
+            if (typeof valor === 'number') return valor;
+            const limpio = String(valor).replace(/[^0-9.\-]/g, '');
+            const num = parseFloat(limpio);
+            return isNaN(num) ? 0 : num;
+        }
+
+        // Un solo Excel (misma estructura) alimenta tanto el maestro de productos
+        // como el stock/costo del sistema para el cálculo del ERI.
         window.cargarMaestroExcel = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -528,11 +523,12 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
-                
+
                 maestroSkuDb = {};
+                stockSistemaDb = {};
                 rows.forEach(row => {
                     const keys = Object.keys(row);
-                    let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "";
+                    let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "", stock = 0, costoUnitario = 0;
 
                     keys.forEach(k => {
                         const kLower = k.toLowerCase().trim();
@@ -542,84 +538,45 @@
                         if (kLower === "variante") variante = String(row[k] || '');
                         if (kLower.includes("tipo")) tipo = String(row[k] || '');
                         if (kLower === "marca") marca = String(row[k] || '');
-                    });
-
-                    barcode = barcode.trim();
-                    sku = sku.trim();
-
-                    if(barcode || sku) {
-                        const key = barcode ? barcode : sku;
-                        maestroSkuDb[key] = {
-                            barcode: barcode,
-                            sku: sku,
-                            producto: producto.trim(),
-                            variante: variante.trim(),
-                            tipo: tipo.trim(),
-                            marca: marca.trim()
-                        };
-                    }
-                });
-
-                localStorage.setItem('minna_maestro_db', JSON.stringify(maestroSkuDb));
-                const totalProds = Object.keys(maestroSkuDb).length;
-                const status = document.getElementById('statusMaestro');
-                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos)`;
-                status.style.color = '#2e7d32';
-            };
-            reader.readAsArrayBuffer(file);
-        };
-
-        // Parsea número aunque venga como texto con comas o símbolos
-        function parseNumeroSeguro(valor) {
-            if (valor === null || valor === undefined || valor === '') return 0;
-            if (typeof valor === 'number') return valor;
-            const limpio = String(valor).replace(/[^0-9.\-]/g, '');
-            const num = parseFloat(limpio);
-            return isNaN(num) ? 0 : num;
-        }
-
-        window.cargarStockSistemaExcel = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
-
-                stockSistemaDb = {};
-                rows.forEach(row => {
-                    const keys = Object.keys(row);
-                    let sku = "", producto = "", variante = "", tipo = "", stock = 0, costoUnitario = 0;
-
-                    keys.forEach(k => {
-                        const kLower = k.toLowerCase().trim();
-                        if (kLower === "sku") sku = String(row[k] || '');
-                        if (kLower === "producto") producto = String(row[k] || '');
-                        if (kLower === "variante") variante = String(row[k] || '');
-                        if (kLower.includes("tipo")) tipo = String(row[k] || '');
                         if (kLower === "stock") stock = parseNumeroSeguro(row[k]);
                         if (kLower.includes("costo neto prom")) costoUnitario = parseNumeroSeguro(row[k]);
                     });
 
+                    barcode = barcode.trim();
                     sku = sku.trim();
+                    producto = producto.trim();
+                    variante = variante.trim();
+                    tipo = tipo.trim();
+                    marca = marca.trim();
+
+                    if (barcode || sku) {
+                        const key = barcode ? barcode : sku;
+                        maestroSkuDb[key] = {
+                            barcode: barcode,
+                            sku: sku,
+                            producto: producto,
+                            variante: variante,
+                            tipo: tipo,
+                            marca: marca
+                        };
+                    }
+
                     if (sku) {
                         stockSistemaDb[sku] = {
-                            producto: producto.trim(),
-                            variante: variante.trim(),
-                            tipo: tipo.trim(),
+                            producto: producto,
+                            variante: variante,
+                            tipo: tipo,
                             stock: stock,
                             costoUnitario: costoUnitario
                         };
                     }
                 });
 
+                localStorage.setItem('minna_maestro_db', JSON.stringify(maestroSkuDb));
                 localStorage.setItem('minna_stock_sistema_db', JSON.stringify(stockSistemaDb));
-                const totalSku = Object.keys(stockSistemaDb).length;
-                const status = document.getElementById('statusStockSistema');
-                status.innerText = `¡Cargado con éxito! (${totalSku} SKUs con stock del sistema)`;
+                const totalProds = Object.keys(maestroSkuDb).length;
+                const status = document.getElementById('statusMaestro');
+                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos, con stock y costos del sistema)`;
                 status.style.color = '#2e7d32';
             };
             reader.readAsArrayBuffer(file);
@@ -673,70 +630,7 @@
             document.getElementById('varProducto').value = item.variante || '-';
             document.getElementById('tipoProductoVal').value = item.tipo || '-';
             document.getElementById('marcaProducto').value = item.marca || '-';
-            actualizarUbicacionesDespacho(item.sku);
         }
-
-        function calcularStockPorUbicacion(skuBuscado) {
-            const stockPorUbicacion = {};
-            historialArray.forEach(m => {
-                if ((m.SKU || '').toLowerCase() !== skuBuscado.toLowerCase()) return;
-
-                const cant = parseInt(m.Cantidad) || 0;
-                const ubicacionOrigen = m.Ubicacion || 'Sin ubicación';
-                const ubicacionDestino = m.Ubicacion_Traslado;
-
-                if (m.Operacion === 'Recepción') {
-                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) + cant;
-                } else if (m.Operacion === 'Despacho' || m.Operacion === 'Merma') {
-                    if (m.Operacion === 'Despacho' && ubicacionOrigen === 'Sin ubicación') return;
-                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
-                } else if (m.Operacion === 'Traslado') {
-                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
-                    if (ubicacionDestino) {
-                        stockPorUbicacion[ubicacionDestino] = (stockPorUbicacion[ubicacionDestino] || 0) + cant;
-                    }
-                }
-            });
-            return stockPorUbicacion;
-        }
-
-        function actualizarUbicacionesDespacho(sku) {
-            const selector = document.getElementById('ubicacionDespacho');
-            if (!selector) return;
-
-            const stockPorUbicacion = calcularStockPorUbicacion(sku);
-            selector.innerHTML = '<option value="">Selecciona una ubicación...</option>';
-            Object.entries(stockPorUbicacion)
-                .filter(([ubicacion, stock]) => ubicacion !== 'Sin ubicación' && stock > 0)
-                .sort(([ubicacionA], [ubicacionB]) => ubicacionA.localeCompare(ubicacionB))
-                .forEach(([ubicacion, stock]) => {
-                    selector.insertAdjacentHTML('beforeend', `<option value="${ubicacion}">${ubicacion} (${stock} disponibles)</option>`);
-                });
-            selector.insertAdjacentHTML('beforeend', '<option value="Sin ubicación">Sin ubicación</option>');
-            selector.value = '';
-            resetearCampoCantidad();
-        }
-
-        // Restaura el campo Cantidad a su estado normal (editable, mínimo 1)
-        function resetearCampoCantidad() {
-            const inputCantidad = document.getElementById('cantidad');
-            inputCantidad.readOnly = false;
-            inputCantidad.min = 1;
-        }
-
-        // Cuando en Despacho se elige "Sin ubicación", la cantidad se fuerza a 0
-        // porque significa que el producto no fue encontrado en ninguna ubicación.
-        window.manejarCambioUbicacionDespacho = function(selectEl) {
-            const inputCantidad = document.getElementById('cantidad');
-            if (selectEl.value === 'Sin ubicación') {
-                inputCantidad.value = 0;
-                inputCantidad.min = 0;
-                inputCantidad.readOnly = true;
-            } else {
-                resetearCampoCantidad();
-                if (inputCantidad.value === '0') inputCantidad.value = '';
-            }
-        };
 
         window.setTipoOperacion = function(tipo, element) {
             document.getElementById('tipoOperacionVal').value = tipo;
@@ -745,20 +639,12 @@
 
             const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
             const inputTraslado = document.getElementById('ubicacionTraslado');
-            const contenedorUbicacionTexto = document.getElementById('contenedorUbicacionTexto');
-            const inputUbicacion = document.getElementById('ubicacion');
-            const selectorUbicacion = document.getElementById('ubicacionDespacho');
             const grupoSucursal = document.getElementById('grupoSucursal');
             const inputSucursal = document.getElementById('sucursalDespacho');
             const grupoCausa = document.getElementById('grupoCausa');
             const selectCausa = document.getElementById('causaMerma');
 
             if (tipo === 'Despacho') {
-                contenedorUbicacionTexto.style.display = 'none';
-                inputUbicacion.required = false;
-                selectorUbicacion.style.display = 'block';
-                selectorUbicacion.required = true;
-                actualizarUbicacionesDespacho(document.getElementById('skuFinal').value);
                 grupoSucursal.style.display = 'block';
                 inputSucursal.required = true;
                 grupoTraslado.style.display = 'none';
@@ -766,10 +652,6 @@
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
             } else if (tipo === 'Traslado') {
-                contenedorUbicacionTexto.style.display = 'flex';
-                inputUbicacion.required = true;
-                selectorUbicacion.style.display = 'none';
-                selectorUbicacion.required = false;
                 grupoSucursal.style.display = 'none';
                 inputSucursal.required = false;
                 grupoTraslado.style.display = 'block';
@@ -778,12 +660,7 @@
                 inputTraslado.placeholder = 'Ej. B-03';
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
-                resetearCampoCantidad();
             } else if (tipo === 'Merma') {
-                contenedorUbicacionTexto.style.display = 'flex';
-                inputUbicacion.required = true;
-                selectorUbicacion.style.display = 'none';
-                selectorUbicacion.required = false;
                 grupoSucursal.style.display = 'none';
                 inputSucursal.required = false;
                 grupoTraslado.style.display = 'block';
@@ -791,19 +668,13 @@
                 inputTraslado.value = 'Merma666';
                 grupoCausa.style.display = 'block';
                 selectCausa.required = true;
-                resetearCampoCantidad();
             } else {
-                contenedorUbicacionTexto.style.display = 'flex';
-                inputUbicacion.required = true;
-                selectorUbicacion.style.display = 'none';
-                selectorUbicacion.required = false;
                 grupoSucursal.style.display = 'none';
                 inputSucursal.required = false;
                 grupoTraslado.style.display = 'none';
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
-                resetearCampoCantidad();
             }
         };
 
@@ -823,6 +694,8 @@
                 skuBuscado = maestroSkuDb[query].sku.toLowerCase();
             }
 
+            // Agrupar cantidades por ubicación sumando recepciones/traslados y restando despachos/mermas
+            let stockPorUbicacion = {};
             let nombreProdEncontrado = "";
 
             historialArray.forEach(m => {
@@ -833,10 +706,30 @@
                 if (mSku === skuBuscado || mBarcode === query || mProd.includes(query)) {
                     if (m.Producto && !nombreProdEncontrado) nombreProdEncontrado = m.Producto;
 
+                    const cant = parseInt(m.Cantidad) || 0;
+                    const op = m.Operacion;
+                    const ubi = m.Ubicacion;
+                    const ubiTraslado = m.Ubicacion_Traslado;
+
+                    if (ubi) {
+                        if (!stockPorUbicacion[ubi]) stockPorUbicacion[ubi] = 0;
+                        if (op === 'Recepción' || op === 'Traslado') {
+                            // Si es la ubicación principal de entrada o llegada de traslado
+                            if (op === 'Recepción') stockPorUbicacion[ubi] += cant;
+                        }
+                        if (op === 'Despacho') {
+                            stockPorUbicacion[ubi] -= cant;
+                        }
+                    }
+
+                    if (ubiTraslado && ubiTraslado !== 'Merma666') {
+                        if (!stockPorUbicacion[ubiTraslado]) stockPorUbicacion[ubiTraslado] = 0;
+                        if (op === 'Traslado') {
+                            stockPorUbicacion[ubiTraslado] += cant;
+                        }
+                    }
                 }
             });
-
-            const stockPorUbicacion = calcularStockPorUbicacion(skuBuscado);
 
             let htmlResultado = `<strong>Producto:</strong> ${nombreProdEncontrado || query.toUpperCase()}<br><br><strong>Ubicaciones y Stock Actual:</strong><ul>`;
             let hayAlMenosUna = false;
@@ -902,6 +795,84 @@
             }
         };
 
+        // ================= ESTILOS DE EXCEL (solo visual, no toca datos) =================
+        const MINNA_COLOR_HEADER = "5E35B1";
+        const MINNA_COLOR_HEADER_ALT = "AB47BC";
+        const MINNA_COLOR_ZEBRA = "F3E5F5";
+        const MINNA_COLOR_BORDE = "D1C4E9";
+        const MINNA_COLOR_TOTAL = "EDE7F6";
+
+        function bordeFino() {
+            const b = { style: "thin", color: { rgb: MINNA_COLOR_BORDE } };
+            return { top: b, bottom: b, left: b, right: b };
+        }
+
+        // Pinta encabezado, cebra en filas, bordes finos y autoajusta el ancho de columnas.
+        // No modifica ningún valor de celda, solo el objeto de estilo "s".
+        function estilizarHoja(ws, opciones) {
+            opciones = opciones || {};
+            if (!ws || !ws['!ref']) return ws;
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const colorHeader = opciones.colorHeader || MINNA_COLOR_HEADER;
+
+            for (let r = range.s.r; r <= range.e.r; r++) {
+                let filaEsTotal = false;
+                if (opciones.marcarTotal) {
+                    const primeraCeldaAddr = XLSX.utils.encode_cell({ r, c: range.s.c });
+                    const primeraCelda = ws[primeraCeldaAddr];
+                    if (primeraCelda && String(primeraCelda.v).toUpperCase().includes('TOTAL')) filaEsTotal = true;
+                }
+
+                for (let c = range.s.c; c <= range.e.c; c++) {
+                    const addr = XLSX.utils.encode_cell({ r, c });
+                    if (!ws[addr]) continue;
+
+                    if (r === range.s.r) {
+                        // Fila de encabezado
+                        ws[addr].s = {
+                            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+                            fill: { fgColor: { rgb: colorHeader } },
+                            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+                            border: bordeFino()
+                        };
+                    } else if (filaEsTotal) {
+                        ws[addr].s = {
+                            font: { bold: true, color: { rgb: "4A148C" } },
+                            fill: { fgColor: { rgb: MINNA_COLOR_TOTAL } },
+                            border: bordeFino(),
+                            alignment: { vertical: "center" }
+                        };
+                    } else {
+                        const esParImpar = (r - range.s.r) % 2 === 0;
+                        ws[addr].s = {
+                            fill: esParImpar ? { fgColor: { rgb: MINNA_COLOR_ZEBRA } } : { fgColor: { rgb: "FFFFFF" } },
+                            border: bordeFino(),
+                            alignment: { vertical: "center" }
+                        };
+                    }
+                }
+            }
+
+            // Autoajustar ancho de columnas según el contenido más largo
+            const cols = [];
+            for (let c = range.s.c; c <= range.e.c; c++) {
+                let maxLen = 8;
+                for (let r = range.s.r; r <= range.e.r; r++) {
+                    const addr = XLSX.utils.encode_cell({ r, c });
+                    const cell = ws[addr];
+                    if (cell && cell.v !== undefined && cell.v !== null) {
+                        const len = String(cell.v).length;
+                        if (len > maxLen) maxLen = len;
+                    }
+                }
+                cols.push({ wch: Math.min(maxLen + 2, 42) });
+            }
+            ws['!cols'] = cols;
+            ws['!rows'] = [{ hpt: 20 }];
+
+            return ws;
+        }
+
         window.exportarExcel = function() {
             if (historialArray.length === 0) {
                 alert('No hay movimientos registrados para exportar.');
@@ -909,13 +880,9 @@
             }
             const dataToExport = historialArray.map(({id, Timestamp, ...rest}) => rest);
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const dataPicking = historialArray
-                .filter(movimiento => movimiento.Operacion === 'Despacho')
-                .map(({id, Timestamp, ...rest}) => rest);
-            const hojaPicking = XLSX.utils.json_to_sheet(dataPicking.length ? dataPicking : [{ Mensaje: 'Sin despachos registrados' }]);
+            estilizarHoja(worksheet);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos_Kardex");
-            XLSX.utils.book_append_sheet(workbook, hojaPicking, "Reporte_Picking");
             XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
         };
 
@@ -1029,11 +996,180 @@
             const hojaSobrantes = XLSX.utils.json_to_sheet(sobrantes.length > 0 ? sobrantes : [{ Mensaje: 'Sin sobrantes 🎉' }]);
             const hojaKpiSheet = XLSX.utils.json_to_sheet(hojaKpi);
 
+            estilizarHoja(hojaFaltantes, { colorHeader: "c62828", marcarTotal: true });
+            estilizarHoja(hojaSobrantes, { colorHeader: "2e7d32", marcarTotal: true });
+            estilizarHoja(hojaKpiSheet, { colorHeader: MINNA_COLOR_HEADER });
+
             XLSX.utils.book_append_sheet(workbook, hojaFaltantes, "Faltantes");
             XLSX.utils.book_append_sheet(workbook, hojaSobrantes, "Sobrantes");
             XLSX.utils.book_append_sheet(workbook, hojaKpiSheet, "KPI ERI");
 
             XLSX.writeFile(workbook, "Inventario_ERI_Minna_SAC.xlsx");
+        };
+
+        // ---- Utilidades para reportes de Picking del día ----
+        function esHoy(timestamp) {
+            if (!timestamp) return false;
+            const d = new Date(timestamp);
+            const hoy = new Date();
+            return d.getFullYear() === hoy.getFullYear() && d.getMonth() === hoy.getMonth() && d.getDate() === hoy.getDate();
+        }
+
+        function obtenerPickingHoyPorSucursal() {
+            const excluidas = ['DEVOLUCIÓN A PROVEEDOR', 'AJUSTE DE INVENTARIO'];
+            const grupos = {};
+            historialArray.forEach(m => {
+                if (m.Operacion !== 'Despacho') return;
+                if (!esHoy(m.Timestamp)) return;
+                const suc = (m.Sucursal || '').trim();
+                if (!suc) return;
+                if (excluidas.some(ex => ex.toLowerCase() === suc.toLowerCase())) return;
+                if (!grupos[suc]) grupos[suc] = [];
+                grupos[suc].push(m);
+            });
+            return grupos;
+        }
+
+        // Genera un nombre de hoja válido para Excel (máx 31 caracteres, sin duplicados ni caracteres inválidos)
+        function nombreHojaSeguro(nombre, usados) {
+            let limpio = String(nombre).replace(/[\[\]\*\/\\\?:]/g, ' ').trim();
+            if (!limpio) limpio = 'Sucursal';
+            limpio = limpio.substring(0, 31);
+            let final = limpio;
+            let i = 2;
+            while (usados.has(final.toLowerCase())) {
+                const sufijo = ` (${i})`;
+                final = limpio.substring(0, 31 - sufijo.length) + sufijo;
+                i++;
+            }
+            usados.add(final.toLowerCase());
+            return final;
+        }
+
+        // Calcula la productividad de picking de hoy, agrupada por responsable
+        function calcularProductividadHoy(itemsTodosHoy) {
+            const porResponsable = {};
+            itemsTodosHoy.forEach(m => {
+                const resp = m.Responsable || 'Sin responsable';
+                if (!porResponsable[resp]) porResponsable[resp] = { lineas: 0, unidades: 0, timestamps: [], sucursales: new Set() };
+                porResponsable[resp].lineas += 1;
+                porResponsable[resp].unidades += parseInt(m.Cantidad) || 0;
+                if (m.Timestamp) porResponsable[resp].timestamps.push(m.Timestamp);
+                if (m.Sucursal) porResponsable[resp].sucursales.add(m.Sucursal);
+            });
+
+            const filas = Object.keys(porResponsable).sort().map(resp => {
+                const d = porResponsable[resp];
+                const inicio = d.timestamps.length ? Math.min(...d.timestamps) : null;
+                const fin = d.timestamps.length ? Math.max(...d.timestamps) : null;
+                const horasBrutas = (inicio !== null && fin !== null) ? (fin - inicio) / 3600000 : 0;
+                const horasCalc = horasBrutas > 0 ? horasBrutas : (1 / 60); // mínimo 1 minuto para no dividir entre 0
+                return {
+                    Responsable: resp,
+                    'Sucursales Atendidas': Array.from(d.sucursales).sort().join(', ') || '-',
+                    'Líneas Pickeadas': d.lineas,
+                    'Unidades Pickeadas': d.unidades,
+                    'Hora Inicio': inicio ? new Date(inicio).toLocaleTimeString('es-PE') : '-',
+                    'Hora Fin': fin ? new Date(fin).toLocaleTimeString('es-PE') : '-',
+                    'Tiempo Activo (hrs)': +horasCalc.toFixed(2),
+                    'Unidades / Hora': +(d.unidades / horasCalc).toFixed(1),
+                    'Líneas / Hora': +(d.lineas / horasCalc).toFixed(1)
+                };
+            });
+
+            const totalLineas = filas.reduce((a, f) => a + f['Líneas Pickeadas'], 0);
+            const totalUnidades = filas.reduce((a, f) => a + f['Unidades Pickeadas'], 0);
+            filas.push({
+                Responsable: 'TOTAL',
+                'Sucursales Atendidas': '',
+                'Líneas Pickeadas': totalLineas,
+                'Unidades Pickeadas': totalUnidades,
+                'Hora Inicio': '',
+                'Hora Fin': '',
+                'Tiempo Activo (hrs)': '',
+                'Unidades / Hora': '',
+                'Líneas / Hora': ''
+            });
+
+            return filas;
+        }
+
+        // Reporte de lo que se pickeó (despachó) HOY, agrupado por sucursal + productividad (sin devolución a proveedor ni ajuste de inventario)
+        window.exportarPickingHoy = function() {
+            const grupos = obtenerPickingHoyPorSucursal();
+            const sucursales = Object.keys(grupos).sort();
+            if (sucursales.length === 0) {
+                alert('No hay picking (despachos) registrado hoy para ninguna sucursal.');
+                return;
+            }
+
+            const workbook = XLSX.utils.book_new();
+            const usados = new Set();
+            const itemsTodosHoy = sucursales.flatMap(suc => grupos[suc]);
+
+            const resumen = sucursales.map(suc => {
+                const items = grupos[suc];
+                const totalUnidades = items.reduce((acc, m) => acc + (parseInt(m.Cantidad) || 0), 0);
+                return { Sucursal: suc, 'Líneas de Picking': items.length, 'Total Unidades': totalUnidades };
+            });
+            const hojaResumen = XLSX.utils.json_to_sheet(resumen);
+            estilizarHoja(hojaResumen);
+            XLSX.utils.book_append_sheet(workbook, hojaResumen, nombreHojaSeguro('Resumen', usados));
+
+            const filasProductividad = calcularProductividadHoy(itemsTodosHoy);
+            const hojaProductividad = XLSX.utils.json_to_sheet(filasProductividad);
+            estilizarHoja(hojaProductividad, { colorHeader: MINNA_COLOR_HEADER_ALT, marcarTotal: true });
+            XLSX.utils.book_append_sheet(workbook, hojaProductividad, nombreHojaSeguro('Productividad', usados));
+
+            sucursales.forEach(suc => {
+                const items = grupos[suc].map(m => ({
+                    Fecha: m.Fecha,
+                    SKU: m.SKU,
+                    'Código de Barras': m.Barcode,
+                    Producto: m.Producto,
+                    Variante: m.Variante,
+                    Tipo: m.Tipo,
+                    Marca: m.Marca,
+                    'Ubicación': m.Ubicacion,
+                    Cantidad: m.Cantidad,
+                    Responsable: m.Responsable
+                }));
+                const hoja = XLSX.utils.json_to_sheet(items);
+                estilizarHoja(hoja);
+                XLSX.utils.book_append_sheet(workbook, hoja, nombreHojaSeguro(suc, usados));
+            });
+
+            const hoyStr = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
+            XLSX.writeFile(workbook, `Picking_Hoy_${hoyStr}.xlsx`);
+        };
+
+        // Excel con la plantilla exacta para hacer la guía: Cantidad, Código de Barras/SKU/N° Serie, Impuesto (IVA), Costo Neto Glosa
+        // Se genera una hoja por sucursal, según el picking (despachos) de hoy.
+        window.exportarGuiaHoy = function() {
+            const grupos = obtenerPickingHoyPorSucursal();
+            const sucursales = Object.keys(grupos).sort();
+            if (sucursales.length === 0) {
+                alert('No hay picking (despachos) registrado hoy para ninguna sucursal.');
+                return;
+            }
+
+            const workbook = XLSX.utils.book_new();
+            const usados = new Set();
+
+            sucursales.forEach(suc => {
+                const items = grupos[suc].map(m => ({
+                    'Cantidad': m.Cantidad,
+                    'Código de Barras, SKU o Número de Serie': m.Barcode || m.SKU,
+                    'Impuesto': 'IVA',
+                    'Costo Neto Glosa': ''
+                }));
+                const hoja = XLSX.utils.json_to_sheet(items);
+                estilizarHoja(hoja, { colorHeader: "ff8f00" });
+                XLSX.utils.book_append_sheet(workbook, hoja, nombreHojaSeguro(suc, usados));
+            });
+
+            const hoyStr = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
+            XLSX.writeFile(workbook, `Guia_Picking_Hoy_${hoyStr}.xlsx`);
         };
 
         window.renderizarHistorialGlobal = function(dataArray) {
@@ -1128,9 +1264,7 @@
             }
 
             const tipoOp = document.getElementById('tipoOperacionVal').value;
-            const ubicacionVal = tipoOp === 'Despacho'
-                ? document.getElementById('ubicacionDespacho').value
-                : document.getElementById('ubicacion').value.trim();
+            const ubicacionVal = document.getElementById('ubicacion').value;
             const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
             const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value.trim() : '';
             const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
@@ -1161,7 +1295,6 @@
                 if (sucursalVal) localStorage.setItem('minna_ultima_sucursal', sucursalVal);
 
                 document.getElementById('opForm').reset();
-                resetearCampoCantidad();
                 document.getElementById('skuFinal').value = '';
                 document.getElementById('nombreProducto').value = '';
                 document.getElementById('varProducto').value = '';
