@@ -261,10 +261,11 @@
                 <div class="form-row">
                     <div class="form-group">
                         <label>Ubicación:</label>
-                        <div class="input-with-btn">
+                        <div class="input-with-btn" id="contenedorUbicacionTexto">
                             <input type="text" id="ubicacion" placeholder="Ej. A-01" required>
                             <button type="button" class="btn-scan" onclick="iniciarEscanner('ubicacion')">📷 Cámara</button>
                         </div>
+                        <select id="ubicacionDespacho" style="display: none;" aria-label="Ubicación de despacho" onchange="window.manejarCambioUbicacionDespacho(this)"></select>
                     </div>
                     <div class="form-group" id="grupoUbicacionTraslado" style="display: none;">
                         <label id="lblUbicacionTraslado">Ubicación de traslado:</label>
@@ -630,7 +631,74 @@
             document.getElementById('varProducto').value = item.variante || '-';
             document.getElementById('tipoProductoVal').value = item.tipo || '-';
             document.getElementById('marcaProducto').value = item.marca || '-';
+            actualizarUbicacionesDespacho(item.sku);
         }
+
+        // Calcula el stock neto por ubicación para un SKU, a partir de todo el historial:
+        // Recepción suma en su ubicación; Despacho y Merma restan en su ubicación de origen;
+        // Traslado resta en el origen y suma en la ubicación de traslado (destino).
+        function calcularStockPorUbicacion(skuBuscado) {
+            const stockPorUbicacion = {};
+            historialArray.forEach(m => {
+                if ((m.SKU || '').toLowerCase() !== (skuBuscado || '').toLowerCase()) return;
+
+                const cant = parseInt(m.Cantidad) || 0;
+                const ubicacionOrigen = m.Ubicacion || 'Sin ubicación';
+                const ubicacionDestino = m.Ubicacion_Traslado;
+
+                if (m.Operacion === 'Recepción') {
+                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) + cant;
+                } else if (m.Operacion === 'Despacho' || m.Operacion === 'Merma') {
+                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
+                } else if (m.Operacion === 'Traslado') {
+                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
+                    if (ubicacionDestino && ubicacionDestino !== 'Merma666') {
+                        stockPorUbicacion[ubicacionDestino] = (stockPorUbicacion[ubicacionDestino] || 0) + cant;
+                    }
+                }
+            });
+            return stockPorUbicacion;
+        }
+
+        // Rellena el selector de ubicaciones para Despacho: todas las ubicaciones con stock
+        // disponible para ese SKU, más la opción fija "No encontrado" al final.
+        function actualizarUbicacionesDespacho(sku) {
+            const selector = document.getElementById('ubicacionDespacho');
+            if (!selector) return;
+
+            const stockPorUbicacion = calcularStockPorUbicacion(sku);
+            selector.innerHTML = '<option value="">Selecciona una ubicación...</option>';
+            Object.entries(stockPorUbicacion)
+                .filter(([ubicacion, stock]) => ubicacion !== 'Sin ubicación' && stock > 0)
+                .sort(([ubicacionA], [ubicacionB]) => ubicacionA.localeCompare(ubicacionB))
+                .forEach(([ubicacion, stock]) => {
+                    selector.insertAdjacentHTML('beforeend', `<option value="${ubicacion}">${ubicacion} (${stock} disponibles)</option>`);
+                });
+            selector.insertAdjacentHTML('beforeend', '<option value="No encontrado">No encontrado</option>');
+            selector.value = '';
+            resetearCampoCantidad();
+        }
+
+        // Restaura el campo Cantidad a su estado normal (editable, mínimo 1)
+        function resetearCampoCantidad() {
+            const inputCantidad = document.getElementById('cantidad');
+            inputCantidad.readOnly = false;
+            inputCantidad.min = 1;
+        }
+
+        // Cuando en Despacho se elige "No encontrado", la cantidad se fuerza a 0
+        // porque significa que el producto no fue encontrado en ninguna ubicación.
+        window.manejarCambioUbicacionDespacho = function(selectEl) {
+            const inputCantidad = document.getElementById('cantidad');
+            if (selectEl.value === 'No encontrado') {
+                inputCantidad.value = 0;
+                inputCantidad.min = 0;
+                inputCantidad.readOnly = true;
+            } else {
+                resetearCampoCantidad();
+                if (inputCantidad.value === '0') inputCantidad.value = '';
+            }
+        };
 
         window.setTipoOperacion = function(tipo, element) {
             document.getElementById('tipoOperacionVal').value = tipo;
@@ -639,12 +707,20 @@
 
             const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
             const inputTraslado = document.getElementById('ubicacionTraslado');
+            const contenedorUbicacionTexto = document.getElementById('contenedorUbicacionTexto');
+            const inputUbicacion = document.getElementById('ubicacion');
+            const selectorUbicacion = document.getElementById('ubicacionDespacho');
             const grupoSucursal = document.getElementById('grupoSucursal');
             const inputSucursal = document.getElementById('sucursalDespacho');
             const grupoCausa = document.getElementById('grupoCausa');
             const selectCausa = document.getElementById('causaMerma');
 
             if (tipo === 'Despacho') {
+                contenedorUbicacionTexto.style.display = 'none';
+                inputUbicacion.required = false;
+                selectorUbicacion.style.display = 'block';
+                selectorUbicacion.required = true;
+                actualizarUbicacionesDespacho(document.getElementById('skuFinal').value);
                 grupoSucursal.style.display = 'block';
                 inputSucursal.required = true;
                 grupoTraslado.style.display = 'none';
@@ -652,6 +728,10 @@
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
             } else if (tipo === 'Traslado') {
+                contenedorUbicacionTexto.style.display = 'flex';
+                inputUbicacion.required = true;
+                selectorUbicacion.style.display = 'none';
+                selectorUbicacion.required = false;
                 grupoSucursal.style.display = 'none';
                 inputSucursal.required = false;
                 grupoTraslado.style.display = 'block';
@@ -660,7 +740,12 @@
                 inputTraslado.placeholder = 'Ej. B-03';
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
+                resetearCampoCantidad();
             } else if (tipo === 'Merma') {
+                contenedorUbicacionTexto.style.display = 'flex';
+                inputUbicacion.required = true;
+                selectorUbicacion.style.display = 'none';
+                selectorUbicacion.required = false;
                 grupoSucursal.style.display = 'none';
                 inputSucursal.required = false;
                 grupoTraslado.style.display = 'block';
@@ -668,13 +753,19 @@
                 inputTraslado.value = 'Merma666';
                 grupoCausa.style.display = 'block';
                 selectCausa.required = true;
+                resetearCampoCantidad();
             } else {
+                contenedorUbicacionTexto.style.display = 'flex';
+                inputUbicacion.required = true;
+                selectorUbicacion.style.display = 'none';
+                selectorUbicacion.required = false;
                 grupoSucursal.style.display = 'none';
                 inputSucursal.required = false;
                 grupoTraslado.style.display = 'none';
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
+                resetearCampoCantidad();
             }
         };
 
@@ -1264,7 +1355,9 @@
             }
 
             const tipoOp = document.getElementById('tipoOperacionVal').value;
-            const ubicacionVal = document.getElementById('ubicacion').value;
+            const ubicacionVal = tipoOp === 'Despacho'
+                ? document.getElementById('ubicacionDespacho').value
+                : document.getElementById('ubicacion').value;
             const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
             const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value.trim() : '';
             const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
@@ -1295,6 +1388,7 @@
                 if (sucursalVal) localStorage.setItem('minna_ultima_sucursal', sucursalVal);
 
                 document.getElementById('opForm').reset();
+                resetearCampoCantidad();
                 document.getElementById('skuFinal').value = '';
                 document.getElementById('nombreProducto').value = '';
                 document.getElementById('varProducto').value = '';
