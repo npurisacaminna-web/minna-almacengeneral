@@ -144,7 +144,7 @@
 
     <div class="main-container">
         
-        <!-- TARDETERIA / FORMULARIO PRINCIPAL -->
+        <!-- FORMULARIO PRINCIPAL -->
         <div class="card">
             <h3>1. Cargar Excel Maestro de Productos</h3>
             <div class="form-group">
@@ -264,7 +264,7 @@
             </form>
         </div>
 
-        <!-- TARJETA INDEPENDIENTE DE CONSULTA DE UBICACIONES Y CANTIDADES -->
+        <!-- TARJETA DE CONSULTA DE UBICACIONES Y STOCK -->
         <div class="card">
             <h3>🔍 Consultar Ubicación y Stock de Producto</h3>
             <p style="font-size: 12px; color: #546e7a; margin-bottom: 10px;">
@@ -493,7 +493,6 @@
             }
         };
 
-        // Lógica de cálculo y desglose de ubicaciones y cantidades
         window.consultarUbicaciones = function(valorBusqueda) {
             const boxRes = document.getElementById('resultadoUbicacionesBox');
             const query = valorBusqueda.trim().toLowerCase();
@@ -503,13 +502,11 @@
                 return;
             }
 
-            // Encontrar el SKU exacto o aproximado desde el maestro si escanean código de barras
             let skuBuscado = query;
             if (maestroSkuDb[query]) {
                 skuBuscado = maestroSkuDb[query].sku.toLowerCase();
             }
 
-            // Agrupar cantidades por ubicación sumando recepciones/traslados y restando despachos/mermas
             let stockPorUbicacion = {};
             let nombreProdEncontrado = "";
 
@@ -529,7 +526,6 @@
                     if (ubi) {
                         if (!stockPorUbicacion[ubi]) stockPorUbicacion[ubi] = 0;
                         if (op === 'Recepción' || op === 'Traslado') {
-                            // Si es la ubicación principal de entrada o llegada de traslado
                             if (op === 'Recepción') stockPorUbicacion[ubi] += cant;
                         }
                         if (op === 'Despacho') {
@@ -724,7 +720,7 @@
                 Tipo: document.getElementById('tipoProductoVal').value,
                 Marca: document.getElementById('marcaProducto').value,
                 Ubicacion: ubicacionVal,
-                Ubicacion_Tras traslado: ubicacionTrasladoVal,
+                Ubicacion_Traslado: ubicacionTrasladoVal,
                 Sucursal: sucursalVal,
                 Causa: causaVal,
                 Cantidad: parseInt(document.getElementById('cantidad').value),
