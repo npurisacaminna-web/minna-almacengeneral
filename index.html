@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Minna S.A.C. - Control de Almacén K-Beauty</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
 
     <style>
@@ -340,7 +340,7 @@
                 <div style="margin-top: 15px; text-align: center; display: flex; flex-direction: column; gap: 10px;">
                     <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
                     <button class="btn-excel" style="background: var(--minna-dark-purple);" onclick="exportarInventarioERI()">📦 Descargar Inventario (Faltantes / Sobrantes / ERI)</button>
-                    <button class="btn-excel" style="background: var(--minna-accent);" onclick="exportarPickingHoy()">🚚 Descargar Picking de Hoy por Sucursal</button>
+                    <button class="btn-excel" style="background: var(--minna-accent);" onclick="exportarPickingHoy()">🚚 Descargar Picking de Hoy por Sucursal + Productividad</button>
                     <button class="btn-excel" style="background: #ff8f00;" onclick="exportarGuiaHoy()">📄 Descargar Excel para Guía (Picking de Hoy)</button>
                 </div>
             </div>
@@ -795,6 +795,84 @@
             }
         };
 
+        // ================= ESTILOS DE EXCEL (solo visual, no toca datos) =================
+        const MINNA_COLOR_HEADER = "5E35B1";
+        const MINNA_COLOR_HEADER_ALT = "AB47BC";
+        const MINNA_COLOR_ZEBRA = "F3E5F5";
+        const MINNA_COLOR_BORDE = "D1C4E9";
+        const MINNA_COLOR_TOTAL = "EDE7F6";
+
+        function bordeFino() {
+            const b = { style: "thin", color: { rgb: MINNA_COLOR_BORDE } };
+            return { top: b, bottom: b, left: b, right: b };
+        }
+
+        // Pinta encabezado, cebra en filas, bordes finos y autoajusta el ancho de columnas.
+        // No modifica ningún valor de celda, solo el objeto de estilo "s".
+        function estilizarHoja(ws, opciones) {
+            opciones = opciones || {};
+            if (!ws || !ws['!ref']) return ws;
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            const colorHeader = opciones.colorHeader || MINNA_COLOR_HEADER;
+
+            for (let r = range.s.r; r <= range.e.r; r++) {
+                let filaEsTotal = false;
+                if (opciones.marcarTotal) {
+                    const primeraCeldaAddr = XLSX.utils.encode_cell({ r, c: range.s.c });
+                    const primeraCelda = ws[primeraCeldaAddr];
+                    if (primeraCelda && String(primeraCelda.v).toUpperCase().includes('TOTAL')) filaEsTotal = true;
+                }
+
+                for (let c = range.s.c; c <= range.e.c; c++) {
+                    const addr = XLSX.utils.encode_cell({ r, c });
+                    if (!ws[addr]) continue;
+
+                    if (r === range.s.r) {
+                        // Fila de encabezado
+                        ws[addr].s = {
+                            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
+                            fill: { fgColor: { rgb: colorHeader } },
+                            alignment: { horizontal: "center", vertical: "center", wrapText: true },
+                            border: bordeFino()
+                        };
+                    } else if (filaEsTotal) {
+                        ws[addr].s = {
+                            font: { bold: true, color: { rgb: "4A148C" } },
+                            fill: { fgColor: { rgb: MINNA_COLOR_TOTAL } },
+                            border: bordeFino(),
+                            alignment: { vertical: "center" }
+                        };
+                    } else {
+                        const esParImpar = (r - range.s.r) % 2 === 0;
+                        ws[addr].s = {
+                            fill: esParImpar ? { fgColor: { rgb: MINNA_COLOR_ZEBRA } } : { fgColor: { rgb: "FFFFFF" } },
+                            border: bordeFino(),
+                            alignment: { vertical: "center" }
+                        };
+                    }
+                }
+            }
+
+            // Autoajustar ancho de columnas según el contenido más largo
+            const cols = [];
+            for (let c = range.s.c; c <= range.e.c; c++) {
+                let maxLen = 8;
+                for (let r = range.s.r; r <= range.e.r; r++) {
+                    const addr = XLSX.utils.encode_cell({ r, c });
+                    const cell = ws[addr];
+                    if (cell && cell.v !== undefined && cell.v !== null) {
+                        const len = String(cell.v).length;
+                        if (len > maxLen) maxLen = len;
+                    }
+                }
+                cols.push({ wch: Math.min(maxLen + 2, 42) });
+            }
+            ws['!cols'] = cols;
+            ws['!rows'] = [{ hpt: 20 }];
+
+            return ws;
+        }
+
         window.exportarExcel = function() {
             if (historialArray.length === 0) {
                 alert('No hay movimientos registrados para exportar.');
@@ -802,6 +880,7 @@
             }
             const dataToExport = historialArray.map(({id, Timestamp, ...rest}) => rest);
             const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+            estilizarHoja(worksheet);
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos_Kardex");
             XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
@@ -917,6 +996,10 @@
             const hojaSobrantes = XLSX.utils.json_to_sheet(sobrantes.length > 0 ? sobrantes : [{ Mensaje: 'Sin sobrantes 🎉' }]);
             const hojaKpiSheet = XLSX.utils.json_to_sheet(hojaKpi);
 
+            estilizarHoja(hojaFaltantes, { colorHeader: "c62828", marcarTotal: true });
+            estilizarHoja(hojaSobrantes, { colorHeader: "2e7d32", marcarTotal: true });
+            estilizarHoja(hojaKpiSheet, { colorHeader: MINNA_COLOR_HEADER });
+
             XLSX.utils.book_append_sheet(workbook, hojaFaltantes, "Faltantes");
             XLSX.utils.book_append_sheet(workbook, hojaSobrantes, "Sobrantes");
             XLSX.utils.book_append_sheet(workbook, hojaKpiSheet, "KPI ERI");
@@ -963,7 +1046,55 @@
             return final;
         }
 
-        // Reporte de lo que se pickeó (despachó) HOY, agrupado por sucursal (sin devolución a proveedor ni ajuste de inventario)
+        // Calcula la productividad de picking de hoy, agrupada por responsable
+        function calcularProductividadHoy(itemsTodosHoy) {
+            const porResponsable = {};
+            itemsTodosHoy.forEach(m => {
+                const resp = m.Responsable || 'Sin responsable';
+                if (!porResponsable[resp]) porResponsable[resp] = { lineas: 0, unidades: 0, timestamps: [], sucursales: new Set() };
+                porResponsable[resp].lineas += 1;
+                porResponsable[resp].unidades += parseInt(m.Cantidad) || 0;
+                if (m.Timestamp) porResponsable[resp].timestamps.push(m.Timestamp);
+                if (m.Sucursal) porResponsable[resp].sucursales.add(m.Sucursal);
+            });
+
+            const filas = Object.keys(porResponsable).sort().map(resp => {
+                const d = porResponsable[resp];
+                const inicio = d.timestamps.length ? Math.min(...d.timestamps) : null;
+                const fin = d.timestamps.length ? Math.max(...d.timestamps) : null;
+                const horasBrutas = (inicio !== null && fin !== null) ? (fin - inicio) / 3600000 : 0;
+                const horasCalc = horasBrutas > 0 ? horasBrutas : (1 / 60); // mínimo 1 minuto para no dividir entre 0
+                return {
+                    Responsable: resp,
+                    'Sucursales Atendidas': Array.from(d.sucursales).sort().join(', ') || '-',
+                    'Líneas Pickeadas': d.lineas,
+                    'Unidades Pickeadas': d.unidades,
+                    'Hora Inicio': inicio ? new Date(inicio).toLocaleTimeString('es-PE') : '-',
+                    'Hora Fin': fin ? new Date(fin).toLocaleTimeString('es-PE') : '-',
+                    'Tiempo Activo (hrs)': +horasCalc.toFixed(2),
+                    'Unidades / Hora': +(d.unidades / horasCalc).toFixed(1),
+                    'Líneas / Hora': +(d.lineas / horasCalc).toFixed(1)
+                };
+            });
+
+            const totalLineas = filas.reduce((a, f) => a + f['Líneas Pickeadas'], 0);
+            const totalUnidades = filas.reduce((a, f) => a + f['Unidades Pickeadas'], 0);
+            filas.push({
+                Responsable: 'TOTAL',
+                'Sucursales Atendidas': '',
+                'Líneas Pickeadas': totalLineas,
+                'Unidades Pickeadas': totalUnidades,
+                'Hora Inicio': '',
+                'Hora Fin': '',
+                'Tiempo Activo (hrs)': '',
+                'Unidades / Hora': '',
+                'Líneas / Hora': ''
+            });
+
+            return filas;
+        }
+
+        // Reporte de lo que se pickeó (despachó) HOY, agrupado por sucursal + productividad (sin devolución a proveedor ni ajuste de inventario)
         window.exportarPickingHoy = function() {
             const grupos = obtenerPickingHoyPorSucursal();
             const sucursales = Object.keys(grupos).sort();
@@ -974,6 +1105,7 @@
 
             const workbook = XLSX.utils.book_new();
             const usados = new Set();
+            const itemsTodosHoy = sucursales.flatMap(suc => grupos[suc]);
 
             const resumen = sucursales.map(suc => {
                 const items = grupos[suc];
@@ -981,7 +1113,13 @@
                 return { Sucursal: suc, 'Líneas de Picking': items.length, 'Total Unidades': totalUnidades };
             });
             const hojaResumen = XLSX.utils.json_to_sheet(resumen);
+            estilizarHoja(hojaResumen);
             XLSX.utils.book_append_sheet(workbook, hojaResumen, nombreHojaSeguro('Resumen', usados));
+
+            const filasProductividad = calcularProductividadHoy(itemsTodosHoy);
+            const hojaProductividad = XLSX.utils.json_to_sheet(filasProductividad);
+            estilizarHoja(hojaProductividad, { colorHeader: MINNA_COLOR_HEADER_ALT, marcarTotal: true });
+            XLSX.utils.book_append_sheet(workbook, hojaProductividad, nombreHojaSeguro('Productividad', usados));
 
             sucursales.forEach(suc => {
                 const items = grupos[suc].map(m => ({
@@ -997,6 +1135,7 @@
                     Responsable: m.Responsable
                 }));
                 const hoja = XLSX.utils.json_to_sheet(items);
+                estilizarHoja(hoja);
                 XLSX.utils.book_append_sheet(workbook, hoja, nombreHojaSeguro(suc, usados));
             });
 
@@ -1025,6 +1164,7 @@
                     'Costo Neto Glosa': ''
                 }));
                 const hoja = XLSX.utils.json_to_sheet(items);
+                estilizarHoja(hoja, { colorHeader: "ff8f00" });
                 XLSX.utils.book_append_sheet(workbook, hoja, nombreHojaSeguro(suc, usados));
             });
 
