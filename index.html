@@ -32,6 +32,10 @@
         }
         header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         header p { margin: 6px 0 0 0; color: #f3e5f5; font-size: 13px; font-weight: 500; }
+        .responsable-badge { margin-top: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        .responsable-badge span { background: rgba(255,255,255,0.15); padding: 5px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .btn-cambiar-responsable { background: rgba(255,255,255,0.9); color: var(--minna-dark-purple); border: none; padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .btn-cambiar-responsable:hover { background: white; }
 
         .main-container { display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 1400px; margin: 0 auto; }
         @media(min-width: 900px) {
@@ -133,6 +137,27 @@
             color: var(--minna-dark-purple);
         }
         .ubicaciones-resultado ul { margin: 5px 0 0 15px; padding: 0; }
+
+        #modalResponsable {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(94, 53, 177, 0.97);
+            z-index: 10000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        .responsable-modal-box {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 380px;
+            text-align: center;
+        }
+        .responsable-modal-box h2 { color: var(--minna-dark-purple); margin-top: 0; font-size: 19px; }
+        .responsable-modal-box p { font-size: 13px; color: #546e7a; }
     </style>
 </head>
 <body>
@@ -140,7 +165,23 @@
     <header>
         <h1>💜 MINNA S.A.C. - Control de Almacén e Inventario</h1>
         <p>Expertos en K-Beauty | Sincronización en Vivo</p>
+        <div class="responsable-badge">
+            <span>👤 Responsable: <strong id="nombreResponsableActual">-</strong></span>
+            <button type="button" class="btn-cambiar-responsable" onclick="abrirModalResponsable()">Cambiar</button>
+        </div>
     </header>
+
+    <div id="modalResponsable">
+        <div class="responsable-modal-box">
+            <h2>👋 ¡Bienvenido/a!</h2>
+            <p>Indica quién eres. Este nombre se usará como responsable en todas las operaciones que registres (Recepción, Despacho, Traslado y Merma).</p>
+            <div class="form-group" style="text-align:left;">
+                <label>Tu nombre:</label>
+                <input type="text" id="inputResponsableModal" list="listaResponsables" placeholder="Escribe tu nombre..." autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault(); confirmarResponsable();}">
+            </div>
+            <button type="button" class="btn-primary" onclick="confirmarResponsable()">Continuar ✅</button>
+        </div>
+    </div>
 
     <div class="main-container">
         
@@ -218,21 +259,23 @@
                     </div>
                 </div>
 
-                <!-- SELECTOR DE SUCURSAL / DESTINO -->
+                <!-- SELECTOR DE SUCURSAL / DESTINO (con autocompletado) -->
                 <div class="form-group" id="grupoSucursal" style="display: none;">
                     <label id="lblSucursal">Sucursal / Destino:</label>
-                    <select id="sucursalDespacho">
-                        <option value="">Seleccione una sucursal o destino...</option>
-                        <option value="AREQUIPA">AREQUIPA</option>
-                        <option value="Chiclayo">Chiclayo</option>
-                        <option value="Independencia">Independencia</option>
-                        <option value="JOCKEY PLAZA">JOCKEY PLAZA</option>
-                        <option value="Miraflores">Miraflores</option>
-                        <option value="San Miguel">San Miguel</option>
-                        <option value="SANTA ANITA">SANTA ANITA</option>
-                        <option value="TRUJILLO">TRUJILLO</option>
-                        <option value="DEVOLUCIÓN A PROVEEDOR">DEVOLUCIÓN (Retorno a Proveedor)</option>
-                    </select>
+                    <input type="text" id="sucursalDespacho" list="listaSucursales" placeholder="Escribe o elige una sucursal..." autocomplete="off">
+                    <datalist id="listaSucursales">
+                        <option value="AREQUIPA">
+                        <option value="Chiclayo">
+                        <option value="Independencia">
+                        <option value="JOCKEY PLAZA">
+                        <option value="Miraflores">
+                        <option value="San Miguel">
+                        <option value="SANTA ANITA">
+                        <option value="TRUJILLO">
+                        <option value="DEVOLUCIÓN A PROVEEDOR">
+                        <option value="AJUSTE DE INVENTARIO">
+                    </datalist>
+                    <small style="color:#78909c; display:block; margin-top:4px;">¿Contaste mal el stock? Usa "AJUSTE DE INVENTARIO" para corregirlo con un despacho.</small>
                 </div>
 
                 <div class="form-group" id="grupoCausa" style="display: none;">
@@ -249,16 +292,11 @@
                     </select>
                 </div>
 
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Cantidad:</label>
-                        <input type="number" id="cantidad" min="1" placeholder="Ej. 10" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Responsable:</label>
-                        <input type="text" id="responsable" placeholder="Tu nombre" required>
-                    </div>
+                <div class="form-group">
+                    <label>Cantidad:</label>
+                    <input type="number" id="cantidad" min="1" placeholder="Ej. 10" required>
                 </div>
+                <datalist id="listaResponsables"></datalist>
 
                 <button type="submit" class="btn-primary">Registrar en la Nube</button>
             </form>
@@ -335,6 +373,7 @@
         let historialArray = [];
         let html5QrCode = null;
         let destinoEscaneo = '';
+        let responsableActual = '';
 
         window.onload = function() {
             const savedDb = localStorage.getItem('minna_maestro_db');
@@ -344,6 +383,72 @@
                 document.getElementById('statusMaestro').innerText = `Maestro cargado (${totalProds} productos)`;
                 document.getElementById('statusMaestro').style.color = '#2e7d32';
             }
+
+            // Cargar autocompletado de responsables guardados
+            cargarResponsablesGuardados();
+
+            // Recordar la última sucursal usada como sugerencia inicial
+            const ultimaSucursal = localStorage.getItem('minna_ultima_sucursal');
+            if (ultimaSucursal) {
+                document.getElementById('sucursalDespacho').value = ultimaSucursal;
+            }
+
+            // Preguntar quién eres al ingresar a la app (aplica a todas las operaciones)
+            window.abrirModalResponsable();
+        };
+
+        // ---- Autocompletado de Responsables (aprende con el uso) ----
+        function obtenerResponsablesGuardados() {
+            const data = localStorage.getItem('minna_responsables_lista');
+            return data ? JSON.parse(data) : [];
+        }
+
+        function cargarResponsablesGuardados() {
+            const lista = obtenerResponsablesGuardados();
+            const datalist = document.getElementById('listaResponsables');
+            datalist.innerHTML = '';
+            lista.forEach(nombre => {
+                const opt = document.createElement('option');
+                opt.value = nombre;
+                datalist.appendChild(opt);
+            });
+        }
+
+        function guardarResponsableSiEsNuevo(nombre) {
+            nombre = (nombre || '').trim();
+            if (!nombre) return;
+            let lista = obtenerResponsablesGuardados();
+            const yaExiste = lista.some(n => n.toLowerCase() === nombre.toLowerCase());
+            if (!yaExiste) {
+                lista.push(nombre);
+                localStorage.setItem('minna_responsables_lista', JSON.stringify(lista));
+                cargarResponsablesGuardados();
+            }
+            localStorage.setItem('minna_ultimo_responsable', nombre);
+        }
+
+        // ---- Modal de identificación (se usa para cualquier operación) ----
+        window.abrirModalResponsable = function() {
+            const ultimo = responsableActual || localStorage.getItem('minna_ultimo_responsable') || '';
+            document.getElementById('inputResponsableModal').value = ultimo;
+            document.getElementById('modalResponsable').style.display = 'flex';
+            setTimeout(() => {
+                const input = document.getElementById('inputResponsableModal');
+                input.focus();
+                input.select();
+            }, 100);
+        };
+
+        window.confirmarResponsable = function() {
+            const nombre = document.getElementById('inputResponsableModal').value.trim();
+            if (!nombre) {
+                alert('Por favor escribe tu nombre para continuar.');
+                return;
+            }
+            responsableActual = nombre;
+            guardarResponsableSiEsNuevo(nombre);
+            document.getElementById('nombreResponsableActual').innerText = nombre;
+            document.getElementById('modalResponsable').style.display = 'none';
         };
 
         window.cargarMaestroExcel = function(event) {
@@ -455,20 +560,20 @@
             const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
             const inputTraslado = document.getElementById('ubicacionTraslado');
             const grupoSucursal = document.getElementById('grupoSucursal');
-            const selectSucursal = document.getElementById('sucursalDespacho');
+            const inputSucursal = document.getElementById('sucursalDespacho');
             const grupoCausa = document.getElementById('grupoCausa');
             const selectCausa = document.getElementById('causaMerma');
 
             if (tipo === 'Despacho') {
                 grupoSucursal.style.display = 'block';
-                selectSucursal.required = true;
+                inputSucursal.required = true;
                 grupoTraslado.style.display = 'none';
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
             } else if (tipo === 'Traslado') {
                 grupoSucursal.style.display = 'none';
-                selectSucursal.required = false;
+                inputSucursal.required = false;
                 grupoTraslado.style.display = 'block';
                 inputTraslado.readOnly = false;
                 inputTraslado.value = '';
@@ -477,7 +582,7 @@
                 selectCausa.required = false;
             } else if (tipo === 'Merma') {
                 grupoSucursal.style.display = 'none';
-                selectSucursal.required = false;
+                inputSucursal.required = false;
                 grupoTraslado.style.display = 'block';
                 inputTraslado.readOnly = true;
                 inputTraslado.value = 'Merma666';
@@ -485,7 +590,7 @@
                 selectCausa.required = true;
             } else {
                 grupoSucursal.style.display = 'none';
-                selectSucursal.required = false;
+                inputSucursal.required = false;
                 grupoTraslado.style.display = 'none';
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
@@ -707,11 +812,18 @@
                 return;
             }
 
+            if (!responsableActual) {
+                alert('No se ha identificado un responsable. Indica tu nombre para continuar.');
+                window.abrirModalResponsable();
+                return;
+            }
+
             const tipoOp = document.getElementById('tipoOperacionVal').value;
             const ubicacionVal = document.getElementById('ubicacion').value;
             const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
-            const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value : '';
+            const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value.trim() : '';
             const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
+            const responsableVal = responsableActual;
 
             const movimiento = {
                 Fecha: new Date().toLocaleString(),
@@ -724,16 +836,19 @@
                 Tipo: document.getElementById('tipoProductoVal').value,
                 Marca: document.getElementById('marcaProducto').value,
                 Ubicacion: ubicacionVal,
-                Ubicacion_Tras traslado: ubicacionTrasladoVal,
+                Ubicacion_Traslado: ubicacionTrasladoVal,
                 Sucursal: sucursalVal,
                 Causa: causaVal,
                 Cantidad: parseInt(document.getElementById('cantidad').value),
-                Responsable: document.getElementById('responsable').value
+                Responsable: responsableVal
             };
 
             try {
                 await addDoc(collection(db, "movimientos"), movimiento);
-                
+
+                // Guardar la sucursal para que se mantenga en el siguiente despacho
+                if (sucursalVal) localStorage.setItem('minna_ultima_sucursal', sucursalVal);
+
                 document.getElementById('opForm').reset();
                 document.getElementById('skuFinal').value = '';
                 document.getElementById('nombreProducto').value = '';
@@ -741,6 +856,9 @@
                 document.getElementById('tipoProductoVal').value = '';
                 document.getElementById('marcaProducto').value = '';
                 window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
+
+                // La sucursal se mantiene igual hasta que el usuario la cambie
+                if (sucursalVal) document.getElementById('sucursalDespacho').value = sucursalVal;
             } catch (error) {
                 alert("Error al registrar en la nube: " + error.message);
             }
