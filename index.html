@@ -126,12 +126,13 @@
         .ubicaciones-resultado {
             background: #f3e5f5;
             border: 1px solid #d1c4e9;
-            padding: 10px;
+            padding: 12px;
             border-radius: 6px;
-            margin-top: 6px;
+            margin-top: 8px;
             font-size: 12px;
             color: var(--minna-dark-purple);
         }
+        .ubicaciones-resultado ul { margin: 5px 0 0 15px; padding: 0; }
     </style>
 </head>
 <body>
@@ -143,6 +144,7 @@
 
     <div class="main-container">
         
+        <!-- TARDETERIA / FORMULARIO PRINCIPAL -->
         <div class="card">
             <h3>1. Cargar Excel Maestro de Productos</h3>
             <div class="form-group">
@@ -216,7 +218,7 @@
                     </div>
                 </div>
 
-                <!-- SELECTOR DE SUCURSAL / DEVOLUCIÓN A PROVEEDOR -->
+                <!-- SELECTOR DE SUCURSAL / DESTINO -->
                 <div class="form-group" id="grupoSucursal" style="display: none;">
                     <label id="lblSucursal">Sucursal / Destino:</label>
                     <select id="sucursalDespacho">
@@ -247,16 +249,6 @@
                     </select>
                 </div>
 
-                <!-- BUSCADOR DE UBICACIONES POR PRODUCTO (JUNTO A MERMA / TRASLADO) -->
-                <div class="form-group" id="grupoConsultaUbicaciones" style="display: none;">
-                    <label>Consultar Ubicaciones del Producto:</label>
-                    <div class="input-with-btn">
-                        <input type="text" id="inputConsultaUbicacion" placeholder="Escanea o escribe producto/SKU para ver ubicaciones..." oninput="consultarUbicaciones(this.value)" autocomplete="off">
-                        <button type="button" class="btn-scan" onclick="iniciarEscanner('consulta_ubicacion')">📷 Cámara</button>
-                    </div>
-                    <div id="resultadoUbicacionesBox" style="display: none;" class="ubicaciones-resultado"></div>
-                </div>
-
                 <div class="form-row">
                     <div class="form-group">
                         <label>Cantidad:</label>
@@ -272,16 +264,35 @@
             </form>
         </div>
 
+        <!-- TARJETA INDEPENDIENTE DE CONSULTA DE UBICACIONES Y CANTIDADES -->
         <div class="card">
-            <h3>Estado del Sistema en Vivo</h3>
-            <p style="font-size: 13px; color: #546e7a; line-height: 1.5;">
-                Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
+            <h3>🔍 Consultar Ubicación y Stock de Producto</h3>
+            <p style="font-size: 12px; color: #546e7a; margin-bottom: 10px;">
+                Escanea o escribe el producto/SKU para ver instantáneamente en qué ubicaciones se encuentra y qué cantidad hay en cada una.
             </p>
-            <div style="margin-top: 30px; text-align: center;">
-                <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
+            
+            <div class="form-group" style="margin-bottom: 5px;">
+                <label>Escanear Código de Barras o Escribir Producto / SKU:</label>
+                <div class="input-with-btn">
+                    <input type="text" id="inputConsultaUbicacion" placeholder="Escanea el código o escribe..." oninput="consultarUbicaciones(this.value)" autocomplete="off">
+                    <button type="button" class="btn-scan" onclick="iniciarEscanner('consulta_ubicacion')">📷 Cámara</button>
+                </div>
+            </div>
+
+            <div id="resultadoUbicacionesBox" style="display: none;" class="ubicaciones-resultado"></div>
+            
+            <div style="margin-top: 25px;">
+                <h3>Estado del Sistema en Vivo</h3>
+                <p style="font-size: 13px; color: #546e7a; line-height: 1.5;">
+                    Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
+                </p>
+                <div style="margin-top: 15px; text-align: center;">
+                    <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
+                </div>
             </div>
         </div>
 
+        <!-- HISTORIAL GLOBAL -->
         <div class="card full-width">
             <h3>Historial Global Sincronizado</h3>
             <div class="table-responsive">
@@ -318,7 +329,7 @@
         </div>
     </div>
 
-    <!-- Lógica general de la interfaz -->
+    <!-- Lógica general -->
     <script>
         let maestroSkuDb = {};
         let historialArray = [];
@@ -447,7 +458,6 @@
             const selectSucursal = document.getElementById('sucursalDespacho');
             const grupoCausa = document.getElementById('grupoCausa');
             const selectCausa = document.getElementById('causaMerma');
-            const grupoConsultaUbicaciones = document.getElementById('grupoConsultaUbicaciones');
 
             if (tipo === 'Despacho') {
                 grupoSucursal.style.display = 'block';
@@ -456,7 +466,6 @@
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
-                grupoConsultaUbicaciones.style.display = 'none';
             } else if (tipo === 'Traslado') {
                 grupoSucursal.style.display = 'none';
                 selectSucursal.required = false;
@@ -466,7 +475,6 @@
                 inputTraslado.placeholder = 'Ej. B-03';
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
-                grupoConsultaUbicaciones.style.display = 'block';
             } else if (tipo === 'Merma') {
                 grupoSucursal.style.display = 'none';
                 selectSucursal.required = false;
@@ -475,7 +483,6 @@
                 inputTraslado.value = 'Merma666';
                 grupoCausa.style.display = 'block';
                 selectCausa.required = true;
-                grupoConsultaUbicaciones.style.display = 'block';
             } else {
                 grupoSucursal.style.display = 'none';
                 selectSucursal.required = false;
@@ -483,10 +490,10 @@
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
-                grupoConsultaUbicaciones.style.display = 'none';
             }
         };
 
+        // Lógica de cálculo y desglose de ubicaciones y cantidades
         window.consultarUbicaciones = function(valorBusqueda) {
             const boxRes = document.getElementById('resultadoUbicacionesBox');
             const query = valorBusqueda.trim().toLowerCase();
@@ -496,24 +503,66 @@
                 return;
             }
 
-            // Buscar en el historial todas las ubicaciones asociadas a este SKU o código de barras
-            const ubicacionesEncontradas = new Set();
+            // Encontrar el SKU exacto o aproximado desde el maestro si escanean código de barras
+            let skuBuscado = query;
+            if (maestroSkuDb[query]) {
+                skuBuscado = maestroSkuDb[query].sku.toLowerCase();
+            }
+
+            // Agrupar cantidades por ubicación sumando recepciones/traslados y restando despachos/mermas
+            let stockPorUbicacion = {};
+            let nombreProdEncontrado = "";
+
             historialArray.forEach(m => {
-                if ((m.SKU && m.SKU.toLowerCase().includes(query)) || 
-                    (m.Barcode && m.Barcode.toLowerCase().includes(query)) ||
-                    (m.Producto && m.Producto.toLowerCase().includes(query))) {
-                    if (m.Ubicacion) ubicacionesEncontradas.add(m.Ubicacion);
-                    if (m.Ubicacion_Traslado && m.Ubicacion_Traslado !== 'Merma666') ubicacionesEncontradas.add(m.Ubicacion_Traslado);
+                const mSku = (m.SKU || "").toLowerCase();
+                const mBarcode = (m.Barcode || "").toLowerCase();
+                const mProd = (m.Producto || "").toLowerCase();
+
+                if (mSku === skuBuscado || mBarcode === query || mProd.includes(query)) {
+                    if (m.Producto && !nombreProdEncontrado) nombreProdEncontrado = m.Producto;
+
+                    const cant = parseInt(m.Cantidad) || 0;
+                    const op = m.Operacion;
+                    const ubi = m.Ubicacion;
+                    const ubiTraslado = m.Ubicacion_Traslado;
+
+                    if (ubi) {
+                        if (!stockPorUbicacion[ubi]) stockPorUbicacion[ubi] = 0;
+                        if (op === 'Recepción' || op === 'Traslado') {
+                            // Si es la ubicación principal de entrada o llegada de traslado
+                            if (op === 'Recepción') stockPorUbicacion[ubi] += cant;
+                        }
+                        if (op === 'Despacho') {
+                            stockPorUbicacion[ubi] -= cant;
+                        }
+                    }
+
+                    if (ubiTraslado && ubiTraslado !== 'Merma666') {
+                        if (!stockPorUbicacion[ubiTraslado]) stockPorUbicacion[ubiTraslado] = 0;
+                        if (op === 'Traslado') {
+                            stockPorUbicacion[ubiTraslado] += cant;
+                        }
+                    }
                 }
             });
 
-            if (ubicacionesEncontradas.size > 0) {
-                boxRes.style.display = 'block';
-                boxRes.innerHTML = `<strong>Ubicaciones detectadas:</strong> ${Array.from(ubicacionesEncontradas).join(', ')}`;
-            } else {
-                boxRes.style.display = 'block';
-                boxRes.innerHTML = `<em>No se encontraron registros previos con ubicaciones para este producto.</em>`;
+            let htmlResultado = `<strong>Producto:</strong> ${nombreProdEncontrado || query.toUpperCase()}<br><br><strong>Ubicaciones y Stock Actual:</strong><ul>`;
+            let hayAlMenosUna = false;
+
+            for (const [ubi, stock] of Object.entries(stockPorUbicacion)) {
+                if (stock !== 0) {
+                    hayAlMenosUna = true;
+                    htmlResultado += `<li>Ubicación <strong>${ubi}</strong>: <strong>${stock} unidades</strong></li>`;
+                }
             }
+
+            if (!hayAlMenosUna) {
+                htmlResultado += `<li><em>No hay stock disponible registrado en ninguna ubicación para este producto.</em></li>`;
+            }
+            htmlResultado += `</ul>`;
+
+            boxRes.style.display = 'block';
+            boxRes.innerHTML = htmlResultado;
         };
 
         window.iniciarEscanner = function(destino) {
@@ -620,7 +669,7 @@
         };
     </script>
 
-    <!-- Lógica de Firebase en módulo y expuesta a window -->
+    <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -675,7 +724,7 @@
                 Tipo: document.getElementById('tipoProductoVal').value,
                 Marca: document.getElementById('marcaProducto').value,
                 Ubicacion: ubicacionVal,
-                Ubicacion_Traslado: ubicacionTrasladoVal,
+                Ubicacion_Tras traslado: ubicacionTrasladoVal,
                 Sucursal: sucursalVal,
                 Causa: causaVal,
                 Cantidad: parseInt(document.getElementById('cantidad').value),
@@ -691,7 +740,6 @@
                 document.getElementById('varProducto').value = '';
                 document.getElementById('tipoProductoVal').value = '';
                 document.getElementById('marcaProducto').value = '';
-                document.getElementById('resultadoUbicacionesBox').style.display = 'none';
                 window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
             } catch (error) {
                 alert("Error al registrar en la nube: " + error.message);
@@ -700,7 +748,6 @@
 
         window.solicitarEliminacion = async function(idDoc) {
             const pinIngresado = prompt("🔒 Ingresa tu PIN para eliminar este registro:");
-            
             if (pinIngresado === null) return; 
 
             const PIN_SECRETO = "NRYS";
