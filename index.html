@@ -171,6 +171,18 @@
         </div>
     </header>
 
+    <div id="modalPin" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(94, 53, 177, 0.97); z-index: 10001; justify-content: center; align-items: center; padding: 15px;">
+        <div class="responsable-modal-box">
+            <h2>🔒 Acceso Restringido</h2>
+            <p>Esta app es de uso interno de Minna S.A.C. Ingresa el PIN de acceso para continuar.</p>
+            <div class="form-group" style="text-align:left;">
+                <label>PIN de acceso:</label>
+                <input type="password" id="inputPinAcceso" placeholder="Ingresa el PIN..." autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault(); confirmarPinAcceso();}">
+            </div>
+            <button type="button" class="btn-primary" onclick="confirmarPinAcceso()">Ingresar ✅</button>
+        </div>
+    </div>
+
     <div id="modalResponsable">
         <div class="responsable-modal-box">
             <h2>👋 ¡Bienvenido/a!</h2>
@@ -192,6 +204,7 @@
                 <label>Selecciona tu archivo de Excel (.xlsx / .xls):</label>
                 <input type="file" id="excelMaestroFile" accept=".xlsx, .xls" onchange="cargarMaestroExcel(event)" style="background: #f9f8fb; padding: 6px;">
                 <small id="statusMaestro" style="color: #78909c; font-weight: 600; display: block; margin-top: 5px;">Esperando archivo Excel...</small>
+                <small style="color:#78909c; display:block; margin-top:4px;">Este mismo archivo carga los productos y el stock/costo del sistema (para el ERI). Ya no hace falta subirlo dos veces.</small>
             </div>
 
             <h3 style="margin-top: 20px;">2. Registrar Operación</h3>
@@ -262,19 +275,19 @@
                 <!-- SELECTOR DE SUCURSAL / DESTINO (con autocompletado) -->
                 <div class="form-group" id="grupoSucursal" style="display: none;">
                     <label id="lblSucursal">Sucursal / Destino:</label>
-                    <input type="text" id="sucursalDespacho" list="listaSucursales" placeholder="Escribe o elige una sucursal..." autocomplete="off">
-                    <datalist id="listaSucursales">
-                        <option value="AREQUIPA">
-                        <option value="Chiclayo">
-                        <option value="Independencia">
-                        <option value="JOCKEY PLAZA">
-                        <option value="Miraflores">
-                        <option value="San Miguel">
-                        <option value="SANTA ANITA">
-                        <option value="TRUJILLO">
-                        <option value="DEVOLUCIÓN A PROVEEDOR">
-                        <option value="AJUSTE DE INVENTARIO">
-                    </datalist>
+                    <select id="sucursalDespacho">
+                        <option value="">Selecciona una sucursal...</option>
+                        <option value="AREQUIPA">AREQUIPA</option>
+                        <option value="Chiclayo">Chiclayo</option>
+                        <option value="Independencia">Independencia</option>
+                        <option value="JOCKEY PLAZA">JOCKEY PLAZA</option>
+                        <option value="Miraflores">Miraflores</option>
+                        <option value="San Miguel">San Miguel</option>
+                        <option value="SANTA ANITA">SANTA ANITA</option>
+                        <option value="TRUJILLO">TRUJILLO</option>
+                        <option value="DEVOLUCIÓN A PROVEEDOR">DEVOLUCIÓN A PROVEEDOR</option>
+                        <option value="AJUSTE DE INVENTARIO">AJUSTE DE INVENTARIO</option>
+                    </select>
                     <small style="color:#78909c; display:block; margin-top:4px;">¿Contaste mal el stock? Usa "AJUSTE DE INVENTARIO" para corregirlo con un despacho.</small>
                 </div>
 
@@ -324,8 +337,11 @@
                 <p style="font-size: 13px; color: #546e7a; line-height: 1.5;">
                     Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
                 </p>
-                <div style="margin-top: 15px; text-align: center;">
+                <div style="margin-top: 15px; text-align: center; display: flex; flex-direction: column; gap: 10px;">
                     <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
+                    <button class="btn-excel" style="background: var(--minna-dark-purple);" onclick="exportarInventarioERI()">📦 Descargar Inventario (Faltantes / Sobrantes / ERI)</button>
+                    <button class="btn-excel" style="background: var(--minna-accent);" onclick="exportarPickingHoy()">🚚 Descargar Picking de Hoy por Sucursal</button>
+                    <button class="btn-excel" style="background: #ff8f00;" onclick="exportarGuiaHoy()">📄 Descargar Excel para Guía (Picking de Hoy)</button>
                 </div>
             </div>
         </div>
@@ -370,6 +386,7 @@
     <!-- Lógica general -->
     <script>
         let maestroSkuDb = {};
+        let stockSistemaDb = {};
         let historialArray = [];
         let html5QrCode = null;
         let destinoEscaneo = '';
@@ -384,6 +401,11 @@
                 document.getElementById('statusMaestro').style.color = '#2e7d32';
             }
 
+            const savedStockSistema = localStorage.getItem('minna_stock_sistema_db');
+            if (savedStockSistema) {
+                stockSistemaDb = JSON.parse(savedStockSistema);
+            }
+
             // Cargar autocompletado de responsables guardados
             cargarResponsablesGuardados();
 
@@ -393,8 +415,37 @@
                 document.getElementById('sucursalDespacho').value = ultimaSucursal;
             }
 
-            // Preguntar quién eres al ingresar a la app (aplica a todas las operaciones)
-            window.abrirModalResponsable();
+            // Primero pedir el PIN de acceso; recién ahí se pregunta el responsable
+            window.verificarAccesoPin();
+        };
+
+        // ---- PIN de acceso a la app ----
+        const PIN_ACCESO_APP = "MINNA2026";
+
+        window.verificarAccesoPin = function() {
+            if (sessionStorage.getItem('minna_pin_ok') === '1') {
+                window.abrirModalResponsable();
+                return;
+            }
+            document.getElementById('modalPin').style.display = 'flex';
+            setTimeout(() => {
+                const input = document.getElementById('inputPinAcceso');
+                if (input) input.focus();
+            }, 100);
+        };
+
+        window.confirmarPinAcceso = function() {
+            const pinInput = document.getElementById('inputPinAcceso');
+            const valor = (pinInput.value || '').trim().toUpperCase();
+            if (valor === PIN_ACCESO_APP) {
+                sessionStorage.setItem('minna_pin_ok', '1');
+                document.getElementById('modalPin').style.display = 'none';
+                window.abrirModalResponsable();
+            } else {
+                alert('❌ PIN incorrecto. No tienes acceso a esta app.');
+                pinInput.value = '';
+                pinInput.focus();
+            }
         };
 
         // ---- Autocompletado de Responsables (aprende con el uso) ----
@@ -451,6 +502,17 @@
             document.getElementById('modalResponsable').style.display = 'none';
         };
 
+        // Parsea número aunque venga como texto con comas o símbolos
+        function parseNumeroSeguro(valor) {
+            if (valor === null || valor === undefined || valor === '') return 0;
+            if (typeof valor === 'number') return valor;
+            const limpio = String(valor).replace(/[^0-9.\-]/g, '');
+            const num = parseFloat(limpio);
+            return isNaN(num) ? 0 : num;
+        }
+
+        // Un solo Excel (misma estructura) alimenta tanto el maestro de productos
+        // como el stock/costo del sistema para el cálculo del ERI.
         window.cargarMaestroExcel = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -461,11 +523,12 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 const rows = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
-                
+
                 maestroSkuDb = {};
+                stockSistemaDb = {};
                 rows.forEach(row => {
                     const keys = Object.keys(row);
-                    let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "";
+                    let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "", stock = 0, costoUnitario = 0;
 
                     keys.forEach(k => {
                         const kLower = k.toLowerCase().trim();
@@ -475,28 +538,45 @@
                         if (kLower === "variante") variante = String(row[k] || '');
                         if (kLower.includes("tipo")) tipo = String(row[k] || '');
                         if (kLower === "marca") marca = String(row[k] || '');
+                        if (kLower === "stock") stock = parseNumeroSeguro(row[k]);
+                        if (kLower.includes("costo neto prom")) costoUnitario = parseNumeroSeguro(row[k]);
                     });
 
                     barcode = barcode.trim();
                     sku = sku.trim();
+                    producto = producto.trim();
+                    variante = variante.trim();
+                    tipo = tipo.trim();
+                    marca = marca.trim();
 
-                    if(barcode || sku) {
+                    if (barcode || sku) {
                         const key = barcode ? barcode : sku;
                         maestroSkuDb[key] = {
                             barcode: barcode,
                             sku: sku,
-                            producto: producto.trim(),
-                            variante: variante.trim(),
-                            tipo: tipo.trim(),
-                            marca: marca.trim()
+                            producto: producto,
+                            variante: variante,
+                            tipo: tipo,
+                            marca: marca
+                        };
+                    }
+
+                    if (sku) {
+                        stockSistemaDb[sku] = {
+                            producto: producto,
+                            variante: variante,
+                            tipo: tipo,
+                            stock: stock,
+                            costoUnitario: costoUnitario
                         };
                     }
                 });
 
                 localStorage.setItem('minna_maestro_db', JSON.stringify(maestroSkuDb));
+                localStorage.setItem('minna_stock_sistema_db', JSON.stringify(stockSistemaDb));
                 const totalProds = Object.keys(maestroSkuDb).length;
                 const status = document.getElementById('statusMaestro');
-                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos)`;
+                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos, con stock y costos del sistema)`;
                 status.style.color = '#2e7d32';
             };
             reader.readAsArrayBuffer(file);
@@ -725,6 +805,231 @@
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos_Kardex");
             XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
+        };
+
+        // ---- Cruce de Inventario: Sistema (Excel cargado) vs. Físico (movimientos registrados en la app) ----
+        window.exportarInventarioERI = function() {
+            const totalSkuSistema = Object.keys(stockSistemaDb).length;
+            if (totalSkuSistema === 0) {
+                alert('Primero carga el Excel de "Stock Actual del Sistema" (tarjeta 1) para poder calcular el ERI.');
+                return;
+            }
+
+            // 1. Calcular el físico acumulado por SKU a partir de todos los movimientos registrados
+            //    Recepción suma, Despacho y Merma restan. Traslado no cambia el total (solo cambia de ubicación).
+            const fisicoPorSku = {};
+            historialArray.forEach(m => {
+                const sku = (m.SKU || '').trim();
+                if (!sku) return;
+                const cant = parseNumeroSeguro(m.Cantidad);
+                if (!fisicoPorSku[sku]) fisicoPorSku[sku] = 0;
+                if (m.Operacion === 'Recepción') fisicoPorSku[sku] += cant;
+                else if (m.Operacion === 'Despacho') fisicoPorSku[sku] -= cant;
+                else if (m.Operacion === 'Merma') fisicoPorSku[sku] -= cant;
+                // Traslado: no afecta el total general, solo mueve entre ubicaciones
+            });
+
+            // 2. Unir el universo de SKUs (los del sistema + los que tengan movimientos aunque no estén en el sistema)
+            const todosLosSku = new Set([...Object.keys(stockSistemaDb), ...Object.keys(fisicoPorSku)]);
+
+            const faltantes = [];
+            const sobrantes = [];
+            let valorTotalSistema = 0;
+
+            todosLosSku.forEach(sku => {
+                const infoSistema = stockSistemaDb[sku];
+                const stockSistema = infoSistema ? infoSistema.stock : 0;
+                const costoUnitario = infoSistema ? infoSistema.costoUnitario : 0;
+                const stockFisico = fisicoPorSku[sku] || 0;
+                const diferencia = stockFisico - stockSistema;
+
+                valorTotalSistema += stockSistema * costoUnitario;
+
+                // Datos de producto: prioridad Stock Sistema > Maestro
+                let producto = infoSistema ? infoSistema.producto : '';
+                let variante = infoSistema ? infoSistema.variante : '';
+                let tipo = infoSistema ? infoSistema.tipo : '';
+                if (!producto) {
+                    const enMaestro = Object.values(maestroSkuDb).find(p => p.sku === sku);
+                    if (enMaestro) {
+                        producto = enMaestro.producto;
+                        variante = enMaestro.variante;
+                        tipo = enMaestro.tipo;
+                    }
+                }
+
+                if (diferencia < 0) {
+                    const cantidadFaltante = -diferencia;
+                    faltantes.push({
+                        SKU: sku,
+                        Producto: producto,
+                        Variante: variante,
+                        Tipo: tipo,
+                        'Stock Sistema': stockSistema,
+                        'Stock Físico (App)': stockFisico,
+                        'Cantidad Faltante': cantidadFaltante,
+                        'Costo Unitario': costoUnitario,
+                        'Valor Faltante': +(cantidadFaltante * costoUnitario).toFixed(2)
+                    });
+                } else if (diferencia > 0) {
+                    const cantidadSobrante = diferencia;
+                    sobrantes.push({
+                        SKU: sku,
+                        Producto: producto,
+                        Variante: variante,
+                        Tipo: tipo,
+                        'Stock Sistema': stockSistema,
+                        'Stock Físico (App)': stockFisico,
+                        'Cantidad Sobrante': cantidadSobrante,
+                        'Costo Unitario': costoUnitario,
+                        'Valor Sobrante': +(cantidadSobrante * costoUnitario).toFixed(2)
+                    });
+                }
+            });
+
+            // Ordenar de mayor a menor impacto valorizado
+            faltantes.sort((a, b) => b['Valor Faltante'] - a['Valor Faltante']);
+            sobrantes.sort((a, b) => b['Valor Sobrante'] - a['Valor Sobrante']);
+
+            const valorTotalFaltantes = faltantes.reduce((acc, f) => acc + f['Valor Faltante'], 0);
+            const valorTotalSobrantes = sobrantes.reduce((acc, s) => acc + s['Valor Sobrante'], 0);
+            const valorTotalDiferencias = valorTotalFaltantes + valorTotalSobrantes;
+            const eri = valorTotalSistema > 0 ? (1 - (valorTotalDiferencias / valorTotalSistema)) * 100 : 0;
+
+            // Filas de totales al pie de cada tabla
+            if (faltantes.length > 0) {
+                faltantes.push({ SKU: '', Producto: '', Variante: '', Tipo: '', 'Stock Sistema': '', 'Stock Físico (App)': '', 'Cantidad Faltante': 'TOTAL', 'Costo Unitario': '', 'Valor Faltante': +valorTotalFaltantes.toFixed(2) });
+            }
+            if (sobrantes.length > 0) {
+                sobrantes.push({ SKU: '', Producto: '', Variante: '', Tipo: '', 'Stock Sistema': '', 'Stock Físico (App)': '', 'Cantidad Sobrante': 'TOTAL', 'Costo Unitario': '', 'Valor Sobrante': +valorTotalSobrantes.toFixed(2) });
+            }
+
+            const hojaKpi = [
+                { Indicador: 'Valor Total Inventario (Sistema)', Valor: +valorTotalSistema.toFixed(2) },
+                { Indicador: 'Valor Total Faltantes', Valor: +valorTotalFaltantes.toFixed(2) },
+                { Indicador: 'Valor Total Sobrantes', Valor: +valorTotalSobrantes.toFixed(2) },
+                { Indicador: 'Valor Total Diferencias (Faltantes + Sobrantes)', Valor: +valorTotalDiferencias.toFixed(2) },
+                { Indicador: 'ERI - Exactitud de Registro de Inventario (%)', Valor: +eri.toFixed(2) }
+            ];
+
+            const workbook = XLSX.utils.book_new();
+            const hojaFaltantes = XLSX.utils.json_to_sheet(faltantes.length > 0 ? faltantes : [{ Mensaje: 'Sin faltantes 🎉' }]);
+            const hojaSobrantes = XLSX.utils.json_to_sheet(sobrantes.length > 0 ? sobrantes : [{ Mensaje: 'Sin sobrantes 🎉' }]);
+            const hojaKpiSheet = XLSX.utils.json_to_sheet(hojaKpi);
+
+            XLSX.utils.book_append_sheet(workbook, hojaFaltantes, "Faltantes");
+            XLSX.utils.book_append_sheet(workbook, hojaSobrantes, "Sobrantes");
+            XLSX.utils.book_append_sheet(workbook, hojaKpiSheet, "KPI ERI");
+
+            XLSX.writeFile(workbook, "Inventario_ERI_Minna_SAC.xlsx");
+        };
+
+        // ---- Utilidades para reportes de Picking del día ----
+        function esHoy(timestamp) {
+            if (!timestamp) return false;
+            const d = new Date(timestamp);
+            const hoy = new Date();
+            return d.getFullYear() === hoy.getFullYear() && d.getMonth() === hoy.getMonth() && d.getDate() === hoy.getDate();
+        }
+
+        function obtenerPickingHoyPorSucursal() {
+            const excluidas = ['DEVOLUCIÓN A PROVEEDOR', 'AJUSTE DE INVENTARIO'];
+            const grupos = {};
+            historialArray.forEach(m => {
+                if (m.Operacion !== 'Despacho') return;
+                if (!esHoy(m.Timestamp)) return;
+                const suc = (m.Sucursal || '').trim();
+                if (!suc) return;
+                if (excluidas.some(ex => ex.toLowerCase() === suc.toLowerCase())) return;
+                if (!grupos[suc]) grupos[suc] = [];
+                grupos[suc].push(m);
+            });
+            return grupos;
+        }
+
+        // Genera un nombre de hoja válido para Excel (máx 31 caracteres, sin duplicados ni caracteres inválidos)
+        function nombreHojaSeguro(nombre, usados) {
+            let limpio = String(nombre).replace(/[\[\]\*\/\\\?:]/g, ' ').trim();
+            if (!limpio) limpio = 'Sucursal';
+            limpio = limpio.substring(0, 31);
+            let final = limpio;
+            let i = 2;
+            while (usados.has(final.toLowerCase())) {
+                const sufijo = ` (${i})`;
+                final = limpio.substring(0, 31 - sufijo.length) + sufijo;
+                i++;
+            }
+            usados.add(final.toLowerCase());
+            return final;
+        }
+
+        // Reporte de lo que se pickeó (despachó) HOY, agrupado por sucursal (sin devolución a proveedor ni ajuste de inventario)
+        window.exportarPickingHoy = function() {
+            const grupos = obtenerPickingHoyPorSucursal();
+            const sucursales = Object.keys(grupos).sort();
+            if (sucursales.length === 0) {
+                alert('No hay picking (despachos) registrado hoy para ninguna sucursal.');
+                return;
+            }
+
+            const workbook = XLSX.utils.book_new();
+            const usados = new Set();
+
+            const resumen = sucursales.map(suc => {
+                const items = grupos[suc];
+                const totalUnidades = items.reduce((acc, m) => acc + (parseInt(m.Cantidad) || 0), 0);
+                return { Sucursal: suc, 'Líneas de Picking': items.length, 'Total Unidades': totalUnidades };
+            });
+            const hojaResumen = XLSX.utils.json_to_sheet(resumen);
+            XLSX.utils.book_append_sheet(workbook, hojaResumen, nombreHojaSeguro('Resumen', usados));
+
+            sucursales.forEach(suc => {
+                const items = grupos[suc].map(m => ({
+                    Fecha: m.Fecha,
+                    SKU: m.SKU,
+                    'Código de Barras': m.Barcode,
+                    Producto: m.Producto,
+                    Variante: m.Variante,
+                    Tipo: m.Tipo,
+                    Marca: m.Marca,
+                    'Ubicación': m.Ubicacion,
+                    Cantidad: m.Cantidad,
+                    Responsable: m.Responsable
+                }));
+                const hoja = XLSX.utils.json_to_sheet(items);
+                XLSX.utils.book_append_sheet(workbook, hoja, nombreHojaSeguro(suc, usados));
+            });
+
+            const hoyStr = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
+            XLSX.writeFile(workbook, `Picking_Hoy_${hoyStr}.xlsx`);
+        };
+
+        // Excel con la plantilla exacta para hacer la guía: Cantidad, Código de Barras/SKU/N° Serie, Impuesto (IVA), Costo Neto Glosa
+        // Se genera una hoja por sucursal, según el picking (despachos) de hoy.
+        window.exportarGuiaHoy = function() {
+            const grupos = obtenerPickingHoyPorSucursal();
+            const sucursales = Object.keys(grupos).sort();
+            if (sucursales.length === 0) {
+                alert('No hay picking (despachos) registrado hoy para ninguna sucursal.');
+                return;
+            }
+
+            const workbook = XLSX.utils.book_new();
+            const usados = new Set();
+
+            sucursales.forEach(suc => {
+                const items = grupos[suc].map(m => ({
+                    'Cantidad': m.Cantidad,
+                    'Código de Barras, SKU o Número de Serie': m.Barcode || m.SKU,
+                    'Impuesto': 'IVA',
+                    'Costo Neto Glosa': ''
+                }));
+                const hoja = XLSX.utils.json_to_sheet(items);
+                XLSX.utils.book_append_sheet(workbook, hoja, nombreHojaSeguro(suc, usados));
+            });
+
+            const hoyStr = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
+            XLSX.writeFile(workbook, `Guia_Picking_Hoy_${hoyStr}.xlsx`);
         };
 
         window.renderizarHistorialGlobal = function(dataArray) {
