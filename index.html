@@ -2,100 +2,149 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Tabla con Columna de Ajuste</title>
+    <title>Despacho con Asignación Única</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-        th { background-color: #f4f4f4; }
-        input[type="text"] { width: 100%; box-sizing: border-box; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
-        input[type="text"]:disabled { background-color: #e9ecef; border: none; color: #333; }
-        button { padding: 6px 12px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f8f9fa; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .config-box { background: #e9ecef; padding: 15px; border-radius: 6px; margin-bottom: 20px; display: flex; gap: 15px; align-items: flex-end; }
+        .form-group { display: flex; flexDirection: column; flex: 1; }
+        .form-group label { font-size: 13px; font-weight: bold; margin-bottom: 5px; color: #495057; }
+        input, select { padding: 8px; border: 1px solid #ced4da; border-radius: 4px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        input:disabled, select:disabled { background-color: #e2e3e5; color: #383d41; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: left; font-size: 14px; }
+        th { background-color: #343a40; color: white; }
+        button { padding: 8px 15px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; font-weight: bold; }
         button:hover { background-color: #0056b3; }
+        .btn-lock { background-color: #6c757d; }
+        .btn-lock:hover { background-color: #5a6268; }
         .btn-guardar { background-color: #28a745; }
         .btn-guardar:hover { background-color: #218838; }
+        .badge { background: #d4edda; color: #155724; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
     </style>
 </head>
 <body>
 
-    <h2>Gestión de Registros con Columna de Ajuste</h2>
+<div class="container">
+    <h2>Módulo de Despacho</h2>
 
+    <!-- Configuración Única -->
+    <div class="config-box">
+        <div class="form-group">
+            <label for="sucursalGlobal">Sucursal:</label>
+            <select id="sucursalGlobal">
+                <option value="">Seleccione una sucursal...</option>
+                <option value="Sucursal Norte">Sucursal Norte</option>
+                <option value="Sucursal Sur">Sucursal Sur</option>
+                <option value="Sucursal Centro">Sucursal Centro</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="responsableGlobal">Responsable:</label>
+            <input type="text" id="responsableGlobal" placeholder="Nombre del responsable...">
+        </div>
+        <div>
+            <button id="btnBloquearConfig" onclick="toggleBloquearConfig()" class="btn-guardar">Bloquear Datos</button>
+        </div>
+    </div>
+
+    <!-- Tabla de Registros / Escaneados -->
     <table id="tablaRegistros">
         <thead>
             <tr>
                 <th>Código</th>
-                <th>Nombre</th>
-                <th>Descripción</th>
+                <th>Producto</th>
+                <th>Sucursal Asignada</th>
+                <th>Responsable</th>
                 <th>Ajuste</th>
             </tr>
         </thead>
         <tbody>
-            <!-- Los registros se cargan dinámicamente -->
+            <!-- Dinámico -->
         </tbody>
     </table>
+</div>
 
-    <script>
-        // Datos de ejemplo
-        let registros = [
-            { codigo: "CAT-001", nombre: "Artículo 1", descripcion: "Descripción del artículo uno" },
-            { codigo: "CAT-002", nombre: "Artículo 2", descripcion: "Descripción del artículo dos" },
-            { codigo: "CAT-003", nombre: "Artículo 3", descripcion: "Descripción del artículo tres" }
-        ];
+<script>
+    let registros = [
+        { codigo: "PROD-101", producto: "Laptop HP Core i5", sucursal: "", responsable: "" },
+        { codigo: "PROD-102", producto: "Monitor Samsung 24\"", sucursal: "", responsable: "" },
+        { codigo: "PROD-103", producto: "Teclado Mecánico RGB", sucursal: "", responsable: "" }
+    ];
 
-        function renderTabla() {
-            const tbody = document.querySelector("#tablaRegistros tbody");
-            tbody.innerHTML = "";
-            
-            registros.forEach((reg, index) => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td><input type="text" value="${reg.codigo}" id="codigo-${index}" disabled></td>
-                    <td><input type="text" value="${reg.nombre}" id="nombre-${index}" disabled></td>
-                    <td><input type="text" value="${reg.descripcion}" id="desc-${index}" disabled></td>
-                    <td>
-                        <button id="btn-${index}" onclick="toggleEditar(${index})">Editar</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
+    let configBloqueada = false;
 
-        function toggleEditar(index) {
-            const btn = document.getElementById(`btn-${index}`);
-            const codigoInput = document.getElementById(`codigo-${index}`);
-            const nombreInput = document.getElementById(`nombre-${index}`);
-            const descInput = document.getElementById(`desc-${index}`);
+    function renderTabla() {
+        const tbody = document.querySelector("#tablaRegistros tbody");
+        tbody.innerHTML = "";
+        
+        registros.forEach((reg, index) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${reg.codigo}</td>
+                <td>${reg.producto}</td>
+                <td><span id="lbl-sucursal-${index}">${reg.sucursal || '<span style="color:#999">Pendiente</span>'}</span></td>
+                <td><span id="lbl-responsable-${index}">${reg.responsable || '<span style="color:#999">Pendiente</span>'}</span></td>
+                <td>
+                    <button id="btn-${index}" onclick="aplicarDespacho(${index})">Despachar</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
 
-            const isEditing = btn.textContent === "Guardar";
+    function toggleBloquearConfig() {
+        const sucursalInput = document.getElementById("sucursalGlobal");
+        const responsableInput = document.getElementById("responsableGlobal");
+        const btn = document.getElementById("btnBloquearConfig");
 
-            if (isEditing) {
-                // Guardar los cambios en el array de datos
-                registros[index].codigo = codigoInput.value;
-                registros[index].nombre = nombreInput.value;
-                registros[index].descripcion = descInput.value;
-
-                // Deshabilitar campos y cambiar botón
-                codigoInput.disabled = true;
-                nombreInput.disabled = true;
-                descInput.disabled = true;
-                btn.textContent = "Editar";
-                btn.classList.remove("btn-guardar");
-
-                console.log("Registro actualizado:", registros[index]);
-            } else {
-                // Habilitar campos para edición
-                codigoInput.disabled = false;
-                nombreInput.disabled = false;
-                descInput.disabled = false;
-                btn.textContent = "Guardar";
-                btn.classList.add("btn-guardar");
-                codigoInput.focus();
+        if (!configBloqueada) {
+            if (!sucursalInput.value || !responsableInput.value.trim()) {
+                alert("Por favor completa la sucursal y el responsable antes de bloquear.");
+                return;
             }
+            sucursalInput.disabled = true;
+            responsableInput.disabled = true;
+            btn.textContent = "Desbloquear";
+            btn.className = "btn-lock";
+            configBloqueada = true;
+        } else {
+            sucursalInput.disabled = false;
+            responsableInput.disabled = false;
+            btn.textContent = "Bloquear Datos";
+            btn.className = "btn-guardar";
+            configBloqueada = false;
+        }
+    }
+
+    function aplicarDespacho(index) {
+        const sucursalVal = document.getElementById("sucursalGlobal").value;
+        const responsableVal = document.getElementById("responsableGlobal").value;
+
+        if (!sucursalVal || !responsableVal.trim()) {
+            alert("Primero debes llenar la sucursal y el responsable arriba.");
+            document.getElementById("sucursalGlobal").focus();
+            return;
         }
 
-        // Inicializar la tabla al cargar la página
-        renderTabla();
-    </script>
+        // Asignar automáticamente los datos globales al registro escaneado/seleccionado
+        registros[index].sucursal = sucursalVal;
+        registros[index].responsable = responsableVal;
+
+        // Actualizar vista de la fila
+        document.getElementById(`lbl-sucursal-${index}`).innerHTML = `<span class="badge">${sucursalVal}</span>`;
+        document.getElementById(`lbl-responsable-${index}`).textContent = responsableVal;
+        
+        const btn = document.getElementById(`btn-${index}`);
+        btn.textContent = "Completado";
+        btn.disabled = true;
+        btn.style.backgroundColor = "#adb5bd";
+
+        console.log("Producto despachado:", registros[index]);
+    }
+
+    renderTabla();
+</script>
 
 </body>
 </html>
