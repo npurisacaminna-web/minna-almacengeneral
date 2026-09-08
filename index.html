@@ -2,763 +2,100 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Minna S.A.C. - Control de Almacén K-Beauty</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
+    <title>Tabla con Columna de Ajuste</title>
     <style>
-        :root {
-            --minna-purple: #7e57c2;
-            --minna-dark-purple: #5e35b1;
-            --minna-accent: #ab47bc;
-            --bg-gray: #f9f8fb;
-            --card-border: #ede7f6;
-            --success: #2e7d32;
-            --text-dark: #37474f;
-        }
-
-        * { box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-gray); color: var(--text-dark); margin: 0; padding: 15px; }
-        
-        header { 
-            background: linear-gradient(135deg, var(--minna-purple), var(--minna-dark-purple)); 
-            color: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            text-align: center; 
-            margin-bottom: 15px; 
-            box-shadow: 0 4px 10px rgba(126, 87, 194, 0.2); 
-        }
-        header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: 0.5px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        header p { margin: 6px 0 0 0; color: #f3e5f5; font-size: 13px; font-weight: 500; }
-
-        .main-container { display: grid; grid-template-columns: 1fr; gap: 15px; max-width: 1400px; margin: 0 auto; }
-        @media(min-width: 900px) {
-            .main-container { grid-template-columns: 1fr 1fr; }
-        }
-
-        .card { background: white; padding: 18px; border-radius: 12px; border: 1px solid var(--card-border); box-shadow: 0 2px 6px rgba(0,0,0,0.04); position: relative; }
-        .card h3 { margin-top: 0; color: var(--minna-dark-purple); border-bottom: 2px solid var(--minna-accent); padding-bottom: 8px; font-size: 15px; }
-
-        .form-row { display: grid; grid-template-columns: 1fr; gap: 10px; }
-        @media(min-width: 500px) {
-            .form-row { grid-template-columns: 1fr 1fr; }
-        }
-
-        .form-group { margin-bottom: 12px; position: relative; }
-        
-        label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 12px; color: #546e7a; }
-        input, select { width: 100%; padding: 9px; border: 1px solid #d1c4e9; border-radius: 6px; font-size: 13px; background-color: #fff; }
-        input:focus, select:focus { outline: none; border-color: var(--minna-accent); box-shadow: 0 0 0 3px rgba(171, 71, 188, 0.15); }
-        input[readonly] { background-color: #f3e5f5; color: #4a148c; font-weight: 600; border-color: #e1bee7; }
-
-        .input-with-btn { display: flex; gap: 6px; }
-        .btn-scan { background: var(--minna-purple); color: white; border: none; padding: 0 12px; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; white-space: nowrap; display: flex; align-items: center; gap: 4px; }
-        .btn-scan:hover { background: var(--minna-dark-purple); }
-
-        .suggestions-box {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #d1c4e9;
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
-        }
-        .suggestion-item {
-            padding: 10px;
-            cursor: pointer;
-            font-size: 12px;
-            border-bottom: 1px solid #f9f8fb;
-            display: flex;
-            justify-content: space-between;
-        }
-        .suggestion-item:hover { background-color: #f3e5f5; color: var(--minna-dark-purple); }
-
-        .btn-primary { background: var(--minna-dark-purple); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 14px; margin-top: 10px; }
-        .btn-primary:hover { background: #4a148c; }
-
-        .btn-excel { background: var(--success); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; width: 100%; }
-        @media(min-width: 500px) { .btn-excel { width: auto; } }
-        .btn-excel:hover { background: #1b5e20; }
-
-        .btn-delete { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
-        .btn-delete:hover { background: #ffcdd2; }
-
-        .tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
-        .tab-btn { background: #ede7f6; color: #546e7a; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; flex: 1; min-width: 70px; text-align: center; }
-        .tab-btn.active { background: var(--minna-dark-purple); color: white; }
-
-        .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
-        table { width: 100%; border-collapse: collapse; font-size: 11px; white-space: nowrap; }
-        th, td { padding: 8px; border-bottom: 1px solid #ede7f6; text-align: left; }
-        th { background-color: #f3e5f5; color: var(--minna-dark-purple); font-weight: 700; }
-        .full-width { grid-column: 1 / -1; }
-
-        #modalScanner {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            padding: 15px;
-        }
-        .scanner-container {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
-        #reader { width: 100%; border-radius: 6px; overflow: hidden; }
-        .btn-close-scanner { background: #e53935; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
-        
-        .ubicaciones-resultado {
-            background: #f3e5f5;
-            border: 1px solid #d1c4e9;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 8px;
-            font-size: 12px;
-            color: var(--minna-dark-purple);
-        }
-        .ubicaciones-resultado ul { margin: 5px 0 0 15px; padding: 0; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        input[type="text"] { width: 100%; box-sizing: border-box; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        input[type="text"]:disabled { background-color: #e9ecef; border: none; color: #333; }
+        button { padding: 6px 12px; cursor: pointer; background-color: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background-color: #0056b3; }
+        .btn-guardar { background-color: #28a745; }
+        .btn-guardar:hover { background-color: #218838; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>💜 MINNA S.A.C. - Control de Almacén e Inventario</h1>
-        <p>Expertos en K-Beauty | Sincronización en Vivo</p>
-    </header>
+    <h2>Gestión de Registros con Columna de Ajuste</h2>
 
-    <div class="main-container">
-        
-        <!-- FORMULARIO PRINCIPAL -->
-        <div class="card">
-            <h3>1. Cargar Excel Maestro de Productos</h3>
-            <div class="form-group">
-                <label>Selecciona tu archivo de Excel (.xlsx / .xls):</label>
-                <input type="file" id="excelMaestroFile" accept=".xlsx, .xls" onchange="cargarMaestroExcel(event)" style="background: #f9f8fb; padding: 6px;">
-                <small id="statusMaestro" style="color: #78909c; font-weight: 600; display: block; margin-top: 5px;">Esperando archivo Excel...</small>
-            </div>
+    <table id="tablaRegistros">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nombre</th>
+                <th>Descripción</th>
+                <th>Ajuste</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Los registros se cargan dinámicamente -->
+        </tbody>
+    </table>
 
-            <h3 style="margin-top: 20px;">2. Registrar Operación</h3>
-            
-            <div class="form-group">
-                <label>Tipo de Operación:</label>
-                <div class="tabs">
-                    <button type="button" class="tab-btn active" onclick="setTipoOperacion('Recepción', this)">Recepción</button>
-                    <button type="button" class="tab-btn" onclick="setTipoOperacion('Despacho', this)">Despacho</button>
-                    <button type="button" class="tab-btn" onclick="setTipoOperacion('Traslado', this)">Traslado</button>
-                    <button type="button" class="tab-btn" onclick="setTipoOperacion('Merma', this)">Merma</button>
-                </div>
-            </div>
-
-            <form id="opForm" onsubmit="registrarMovimiento(event)">
-                <input type="hidden" id="tipoOperacionVal" value="Recepción">
-
-                <div class="form-group">
-                    <label>Escanear Código de Barras o Escribir Producto / SKU:</label>
-                    <div class="input-with-btn">
-                        <input type="text" id="inputBusqueda" placeholder="Escanea el código o escribe..." oninput="filtrarSugerencias(this.value)" autocomplete="off" required>
-                        <button type="button" class="btn-scan" onclick="iniciarEscanner('producto')">📷 Cámara</button>
-                    </div>
-                    <div id="sugerenciasBox" class="suggestions-box" style="display: none;"></div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>SKU:</label>
-                        <input type="text" id="skuFinal" readonly placeholder="Automático">
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo de Producto:</label>
-                        <input type="text" id="tipoProductoVal" readonly placeholder="Automático">
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Producto:</label>
-                        <input type="text" id="nombreProducto" readonly placeholder="Automático">
-                    </div>
-                    <div class="form-group">
-                        <label>Variante:</label>
-                        <input type="text" id="varProducto" readonly placeholder="Automático">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>Marca:</label>
-                    <input type="text" id="marcaProducto" readonly placeholder="Automático">
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Ubicación:</label>
-                        <div class="input-with-btn">
-                            <input type="text" id="ubicacion" placeholder="Ej. A-01" required>
-                            <button type="button" class="btn-scan" onclick="iniciarEscanner('ubicacion')">📷 Cámara</button>
-                        </div>
-                    </div>
-                    <div class="form-group" id="grupoUbicacionTraslado" style="display: none;">
-                        <label id="lblUbicacionTraslado">Ubicación de traslado:</label>
-                        <input type="text" id="ubicacionTraslado" placeholder="Ej. B-03">
-                    </div>
-                </div>
-
-                <!-- SELECTOR DE SUCURSAL / DESTINO -->
-                <div class="form-group" id="grupoSucursal" style="display: none;">
-                    <label id="lblSucursal">Sucursal / Destino:</label>
-                    <select id="sucursalDespacho">
-                        <option value="">Seleccione una sucursal o destino...</option>
-                        <option value="AREQUIPA">AREQUIPA</option>
-                        <option value="Chiclayo">Chiclayo</option>
-                        <option value="Independencia">Independencia</option>
-                        <option value="JOCKEY PLAZA">JOCKEY PLAZA</option>
-                        <option value="Miraflores">Miraflores</option>
-                        <option value="San Miguel">San Miguel</option>
-                        <option value="SANTA ANITA">SANTA ANITA</option>
-                        <option value="TRUJILLO">TRUJILLO</option>
-                        <option value="DEVOLUCIÓN A PROVEEDOR">DEVOLUCIÓN (Retorno a Proveedor)</option>
-                    </select>
-                </div>
-
-                <div class="form-group" id="grupoCausa" style="display: none;">
-                    <label>Causa de Merma:</label>
-                    <select id="causaMerma">
-                        <option value="">Seleccione una causa...</option>
-                        <option value="Daño por transporte">1. Daño por transporte</option>
-                        <option value="Vencimiento">2. Vencimiento</option>
-                        <option value="Rotura en almacén">3. Rotura en almacén</option>
-                        <option value="Defecto de fábrica">4. Defecto de fábrica</option>
-                        <option value="Merma operativa">5. Merma operativa</option>
-                        <option value="Merma por inventario">6. Merma por inventario</option>
-                        <option value="Hurto / Extravío">7. Hurto / Extravío</option>
-                    </select>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Cantidad:</label>
-                        <input type="number" id="cantidad" min="1" placeholder="Ej. 10" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Responsable:</label>
-                        <input type="text" id="responsable" placeholder="Tu nombre" required>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-primary">Registrar en la Nube</button>
-            </form>
-        </div>
-
-        <!-- TARJETA DE CONSULTA DE UBICACIONES Y STOCK -->
-        <div class="card">
-            <h3>🔍 Consultar Ubicación y Stock de Producto</h3>
-            <p style="font-size: 12px; color: #546e7a; margin-bottom: 10px;">
-                Escanea o escribe el producto/SKU para ver instantáneamente en qué ubicaciones se encuentra y qué cantidad hay en cada una.
-            </p>
-            
-            <div class="form-group" style="margin-bottom: 5px;">
-                <label>Escanear Código de Barras o Escribir Producto / SKU:</label>
-                <div class="input-with-btn">
-                    <input type="text" id="inputConsultaUbicacion" placeholder="Escanea el código o escribe..." oninput="consultarUbicaciones(this.value)" autocomplete="off">
-                    <button type="button" class="btn-scan" onclick="iniciarEscanner('consulta_ubicacion')">📷 Cámara</button>
-                </div>
-            </div>
-
-            <div id="resultadoUbicacionesBox" style="display: none;" class="ubicaciones-resultado"></div>
-            
-            <div style="margin-top: 25px;">
-                <h3>Estado del Sistema en Vivo</h3>
-                <p style="font-size: 13px; color: #546e7a; line-height: 1.5;">
-                    Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
-                </p>
-                <div style="margin-top: 15px; text-align: center;">
-                    <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
-                </div>
-            </div>
-        </div>
-
-        <!-- HISTORIAL GLOBAL -->
-        <div class="card full-width">
-            <h3>Historial Global Sincronizado</h3>
-            <div class="table-responsive">
-                <table id="tablaHistorial">
-                    <thead>
-                        <tr>
-                            <th>Fecha / Hora</th>
-                            <th>Operación</th>
-                            <th>Cód. Barras</th>
-                            <th>SKU</th>
-                            <th>Producto</th>
-                            <th>Variante</th>
-                            <th>Tipo</th>
-                            <th>Marca</th>
-                            <th>Ubicación</th>
-                            <th id="thDetalle" style="display: none;">Detalle / Destino</th>
-                            <th id="thCausa" style="display: none;">Causa</th>
-                            <th>Cant.</th>
-                            <th>Responsable</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <div id="modalScanner">
-        <div class="scanner-container">
-            <h4 style="margin-top:0; color:var(--minna-dark-purple);">Apunta al código de barras</h4>
-            <div id="reader"></div>
-            <button type="button" class="btn-close-scanner" onclick="cerrarEscanner()">Cancelar / Cerrar</button>
-        </div>
-    </div>
-
-    <!-- Lógica general -->
     <script>
-        let maestroSkuDb = {};
-        let historialArray = [];
-        let html5QrCode = null;
-        let destinoEscaneo = '';
+        // Datos de ejemplo
+        let registros = [
+            { codigo: "CAT-001", nombre: "Artículo 1", descripcion: "Descripción del artículo uno" },
+            { codigo: "CAT-002", nombre: "Artículo 2", descripcion: "Descripción del artículo dos" },
+            { codigo: "CAT-003", nombre: "Artículo 3", descripcion: "Descripción del artículo tres" }
+        ];
 
-        window.onload = function() {
-            const savedDb = localStorage.getItem('minna_maestro_db');
-            if (savedDb) {
-                maestroSkuDb = JSON.parse(savedDb);
-                const totalProds = Object.keys(maestroSkuDb).length;
-                document.getElementById('statusMaestro').innerText = `Maestro cargado (${totalProds} productos)`;
-                document.getElementById('statusMaestro').style.color = '#2e7d32';
-            }
-        };
-
-        window.cargarMaestroExcel = function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
-                
-                maestroSkuDb = {};
-                rows.forEach(row => {
-                    const keys = Object.keys(row);
-                    let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "";
-
-                    keys.forEach(k => {
-                        const kLower = k.toLowerCase().trim();
-                        if (kLower.includes("código de barras") || kLower.includes("codigo de barras") || kLower.includes("barcode")) barcode = String(row[k] || '');
-                        if (kLower === "sku") sku = String(row[k] || '');
-                        if (kLower === "producto") producto = String(row[k] || '');
-                        if (kLower === "variante") variante = String(row[k] || '');
-                        if (kLower.includes("tipo")) tipo = String(row[k] || '');
-                        if (kLower === "marca") marca = String(row[k] || '');
-                    });
-
-                    barcode = barcode.trim();
-                    sku = sku.trim();
-
-                    if(barcode || sku) {
-                        const key = barcode ? barcode : sku;
-                        maestroSkuDb[key] = {
-                            barcode: barcode,
-                            sku: sku,
-                            producto: producto.trim(),
-                            variante: variante.trim(),
-                            tipo: tipo.trim(),
-                            marca: marca.trim()
-                        };
-                    }
-                });
-
-                localStorage.setItem('minna_maestro_db', JSON.stringify(maestroSkuDb));
-                const totalProds = Object.keys(maestroSkuDb).length;
-                const status = document.getElementById('statusMaestro');
-                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos)`;
-                status.style.color = '#2e7d32';
-            };
-            reader.readAsArrayBuffer(file);
-        };
-
-        window.filtrarSugerencias = function(texto) {
-            const box = document.getElementById('sugerenciasBox');
-            box.innerHTML = '';
+        function renderTabla() {
+            const tbody = document.querySelector("#tablaRegistros tbody");
+            tbody.innerHTML = "";
             
-            const queryVal = texto.trim().toLowerCase();
-            if (!queryVal) {
-                box.style.display = 'none';
-                return;
-            }
-
-            if (maestroSkuDb[queryVal]) {
-                seleccionarProducto(maestroSkuDb[queryVal]);
-                box.style.display = 'none';
-                return;
-            }
-
-            let matches = 0;
-            for (const key in maestroSkuDb) {
-                const item = maestroSkuDb[key];
-                const matchBarcode = item.barcode.toLowerCase().includes(queryVal);
-                const matchSku = item.sku.toLowerCase().includes(queryVal);
-                const matchProd = item.producto.toLowerCase().includes(queryVal);
-
-                if (matchBarcode || matchSku || matchProd) {
-                    matches++;
-                    if (matches > 10) break;
-
-                    const div = document.createElement('div');
-                    div.className = 'suggestion-item';
-                    div.innerHTML = `<span><strong>${item.sku}</strong> - ${item.producto} (${item.variante || 'S/V'})</span> <small style="color:#78909c;">${item.barcode}</small>`;
-                    div.onclick = function() {
-                        seleccionarProducto(item);
-                        box.style.display = 'none';
-                    };
-                    box.appendChild(div);
-                }
-            }
-
-            box.style.display = matches > 0 ? 'block' : 'none';
-        };
-
-        function seleccionarProducto(item) {
-            document.getElementById('inputBusqueda').value = item.barcode || item.sku;
-            document.getElementById('skuFinal').value = item.sku;
-            document.getElementById('nombreProducto').value = item.producto;
-            document.getElementById('varProducto').value = item.variante || '-';
-            document.getElementById('tipoProductoVal').value = item.tipo || '-';
-            document.getElementById('marcaProducto').value = item.marca || '-';
+            registros.forEach((reg, index) => {
+                const tr = document.createElement("tr");
+                tr.innerHTML = `
+                    <td><input type="text" value="${reg.codigo}" id="codigo-${index}" disabled></td>
+                    <td><input type="text" value="${reg.nombre}" id="nombre-${index}" disabled></td>
+                    <td><input type="text" value="${reg.descripcion}" id="desc-${index}" disabled></td>
+                    <td>
+                        <button id="btn-${index}" onclick="toggleEditar(${index})">Editar</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
         }
 
-        window.setTipoOperacion = function(tipo, element) {
-            document.getElementById('tipoOperacionVal').value = tipo;
-            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-            element.classList.add('active');
+        function toggleEditar(index) {
+            const btn = document.getElementById(`btn-${index}`);
+            const codigoInput = document.getElementById(`codigo-${index}`);
+            const nombreInput = document.getElementById(`nombre-${index}`);
+            const descInput = document.getElementById(`desc-${index}`);
 
-            const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
-            const inputTraslado = document.getElementById('ubicacionTraslado');
-            const grupoSucursal = document.getElementById('grupoSucursal');
-            const selectSucursal = document.getElementById('sucursalDespacho');
-            const grupoCausa = document.getElementById('grupoCausa');
-            const selectCausa = document.getElementById('causaMerma');
+            const isEditing = btn.textContent === "Guardar";
 
-            if (tipo === 'Despacho') {
-                grupoSucursal.style.display = 'block';
-                selectSucursal.required = true;
-                grupoTraslado.style.display = 'none';
-                inputTraslado.required = false;
-                grupoCausa.style.display = 'none';
-                selectCausa.required = false;
-            } else if (tipo === 'Traslado') {
-                grupoSucursal.style.display = 'none';
-                selectSucursal.required = false;
-                grupoTraslado.style.display = 'block';
-                inputTraslado.readOnly = false;
-                inputTraslado.value = '';
-                inputTraslado.placeholder = 'Ej. B-03';
-                grupoCausa.style.display = 'none';
-                selectCausa.required = false;
-            } else if (tipo === 'Merma') {
-                grupoSucursal.style.display = 'none';
-                selectSucursal.required = false;
-                grupoTraslado.style.display = 'block';
-                inputTraslado.readOnly = true;
-                inputTraslado.value = 'Merma666';
-                grupoCausa.style.display = 'block';
-                selectCausa.required = true;
+            if (isEditing) {
+                // Guardar los cambios en el array de datos
+                registros[index].codigo = codigoInput.value;
+                registros[index].nombre = nombreInput.value;
+                registros[index].descripcion = descInput.value;
+
+                // Deshabilitar campos y cambiar botón
+                codigoInput.disabled = true;
+                nombreInput.disabled = true;
+                descInput.disabled = true;
+                btn.textContent = "Editar";
+                btn.classList.remove("btn-guardar");
+
+                console.log("Registro actualizado:", registros[index]);
             } else {
-                grupoSucursal.style.display = 'none';
-                selectSucursal.required = false;
-                grupoTraslado.style.display = 'none';
-                inputTraslado.required = false;
-                grupoCausa.style.display = 'none';
-                selectCausa.required = false;
-            }
-        };
-
-        window.consultarUbicaciones = function(valorBusqueda) {
-            const boxRes = document.getElementById('resultadoUbicacionesBox');
-            const query = valorBusqueda.trim().toLowerCase();
-            if (!query) {
-                boxRes.style.display = 'none';
-                boxRes.innerHTML = '';
-                return;
-            }
-
-            let skuBuscado = query;
-            if (maestroSkuDb[query]) {
-                skuBuscado = maestroSkuDb[query].sku.toLowerCase();
-            }
-
-            let stockPorUbicacion = {};
-            let nombreProdEncontrado = "";
-
-            historialArray.forEach(m => {
-                const mSku = (m.SKU || "").toLowerCase();
-                const mBarcode = (m.Barcode || "").toLowerCase();
-                const mProd = (m.Producto || "").toLowerCase();
-
-                if (mSku === skuBuscado || mBarcode === query || mProd.includes(query)) {
-                    if (m.Producto && !nombreProdEncontrado) nombreProdEncontrado = m.Producto;
-
-                    const cant = parseInt(m.Cantidad) || 0;
-                    const op = m.Operacion;
-                    const ubi = m.Ubicacion;
-                    const ubiTraslado = m.Ubicacion_Traslado;
-
-                    if (ubi) {
-                        if (!stockPorUbicacion[ubi]) stockPorUbicacion[ubi] = 0;
-                        if (op === 'Recepción' || op === 'Traslado') {
-                            if (op === 'Recepción') stockPorUbicacion[ubi] += cant;
-                        }
-                        if (op === 'Despacho') {
-                            stockPorUbicacion[ubi] -= cant;
-                        }
-                    }
-
-                    if (ubiTraslado && ubiTraslado !== 'Merma666') {
-                        if (!stockPorUbicacion[ubiTraslado]) stockPorUbicacion[ubiTraslado] = 0;
-                        if (op === 'Traslado') {
-                            stockPorUbicacion[ubiTraslado] += cant;
-                        }
-                    }
-                }
-            });
-
-            let htmlResultado = `<strong>Producto:</strong> ${nombreProdEncontrado || query.toUpperCase()}<br><br><strong>Ubicaciones y Stock Actual:</strong><ul>`;
-            let hayAlMenosUna = false;
-
-            for (const [ubi, stock] of Object.entries(stockPorUbicacion)) {
-                if (stock !== 0) {
-                    hayAlMenosUna = true;
-                    htmlResultado += `<li>Ubicación <strong>${ubi}</strong>: <strong>${stock} unidades</strong></li>`;
-                }
-            }
-
-            if (!hayAlMenosUna) {
-                htmlResultado += `<li><em>No hay stock disponible registrado en ninguna ubicación para este producto.</em></li>`;
-            }
-            htmlResultado += `</ul>`;
-
-            boxRes.style.display = 'block';
-            boxRes.innerHTML = htmlResultado;
-        };
-
-        window.iniciarEscanner = function(destino) {
-            destinoEscaneo = destino;
-            document.getElementById('modalScanner').style.display = 'flex';
-
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-
-            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                config, 
-                onScanSuccess, 
-                () => {}
-            ).catch(err => {
-                alert("No se pudo acceder a la cámara. Revisa permisos o conexión HTTPS.");
-                window.cerrarEscanner();
-            });
-        };
-
-        function onScanSuccess(decodedText) {
-            window.cerrarEscanner();
-            if (destinoEscaneo === 'producto') {
-                document.getElementById('inputBusqueda').value = decodedText;
-                window.filtrarSugerencias(decodedText);
-            } else if (destinoEscaneo === 'ubicacion') {
-                document.getElementById('ubicacion').value = decodedText;
-            } else if (destinoEscaneo === 'consulta_ubicacion') {
-                document.getElementById('inputConsultaUbicacion').value = decodedText;
-                window.consultarUbicaciones(decodedText);
+                // Habilitar campos para edición
+                codigoInput.disabled = false;
+                nombreInput.disabled = false;
+                descInput.disabled = false;
+                btn.textContent = "Guardar";
+                btn.classList.add("btn-guardar");
+                codigoInput.focus();
             }
         }
 
-        window.cerrarEscanner = function() {
-            if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('modalScanner').style.display = 'none';
-                }).catch(() => {
-                    document.getElementById('modalScanner').style.display = 'none';
-                });
-            } else {
-                document.getElementById('modalScanner').style.display = 'none';
-            }
-        };
-
-        window.exportarExcel = function() {
-            if (historialArray.length === 0) {
-                alert('No hay movimientos registrados para exportar.');
-                return;
-            }
-            const dataToExport = historialArray.map(({id, Timestamp, ...rest}) => rest);
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos_Kardex");
-            XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
-        };
-
-        window.renderizarHistorialGlobal = function(dataArray) {
-            historialArray = dataArray;
-            const tbody = document.querySelector('#tablaHistorial tbody');
-            const thDetalle = document.getElementById('thDetalle');
-            const thCausa = document.getElementById('thCausa');
-            
-            const hayDetalles = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma' || m.Operacion === 'Despacho');
-            const hayCausas = historialArray.some(m => m.Operacion === 'Merma');
-
-            thDetalle.style.display = hayDetalles ? '' : 'none';
-            thCausa.style.display = hayCausas ? '' : 'none';
-
-            historialArray.sort((a, b) => (b.Timestamp || 0) - (a.Timestamp || 0));
-
-            tbody.innerHTML = '';
-            historialArray.forEach(mov => {
-                let detalleTexto = '-';
-                if (mov.Operacion === 'Traslado' || mov.Operacion === 'Merma') {
-                    detalleTexto = mov.Ubicacion_Traslado || '-';
-                } else if (mov.Operacion === 'Despacho') {
-                    detalleTexto = mov.Sucursal || '-';
-                }
-
-                const tdDetalleHtml = hayDetalles ? `<td>${detalleTexto}</td>` : '';
-                const tdCausaHtml = hayCausas ? `<td>${mov.Causa || '-'}</td>` : '';
-
-                const row = `<tr>
-                    <td>${mov.Fecha}</td>
-                    <td><strong>${mov.Operacion}</strong></td>
-                    <td>${mov.Barcode}</td>
-                    <td><strong>${mov.SKU}</strong></td>
-                    <td>${mov.Producto}</td>
-                    <td>${mov.Variante}</td>
-                    <td>${mov.Tipo}</td>
-                    <td>${mov.Marca}</td>
-                    <td>${mov.Ubicacion}</td>
-                    ${tdDetalleHtml}
-                    ${tdCausaHtml}
-                    <td><strong>${mov.Cantidad}</strong></td>
-                    <td>${mov.Responsable}</td>
-                    <td><button class="btn-delete" onclick="window.solicitarEliminacion('${mov.id}')" title="Eliminar registro">🗑️</button></td>
-                </tr>`;
-                tbody.insertAdjacentHTML('beforeend', row);
-            });
-        };
+        // Inicializar la tabla al cargar la página
+        renderTabla();
     </script>
 
-    <!-- Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDKEWqcxKax47LMctLzViN2nZMYQJGCQ",
-            authDomain: "minnaalmacengeneral.firebaseapp.com",
-            projectId: "minnaalmacengeneral",
-            storageBucket: "minnaalmacengeneral.appspot.com",
-            messagingSenderId: "72362177084",
-            appId: "1:72362177084:web:8b73ee95ec281c3842c939",
-            measurementId: "G-B49T04TD6P"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        const q = query(collection(db, "movimientos"));
-        onSnapshot(q, (snapshot) => {
-            const tempArray = [];
-            snapshot.forEach((docItem) => {
-                tempArray.push({ id: docItem.id, ...docItem.data() });
-            });
-            if (typeof window.renderizarHistorialGlobal === 'function') {
-                window.renderizarHistorialGlobal(tempArray);
-            }
-        });
-
-        window.registrarMovimiento = async function(event) {
-            event.preventDefault();
-            const sku = document.getElementById('skuFinal').value;
-            
-            if (!sku) {
-                alert('Selecciona o escanea un producto válido primero.');
-                return;
-            }
-
-            const tipoOp = document.getElementById('tipoOperacionVal').value;
-            const ubicacionVal = document.getElementById('ubicacion').value;
-            const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
-            const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value : '';
-            const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
-
-            const movimiento = {
-                Fecha: new Date().toLocaleString(),
-                Timestamp: Date.now(),
-                Operacion: tipoOp,
-                Barcode: document.getElementById('inputBusqueda').value,
-                SKU: sku,
-                Producto: document.getElementById('nombreProducto').value,
-                Variante: document.getElementById('varProducto').value,
-                Tipo: document.getElementById('tipoProductoVal').value,
-                Marca: document.getElementById('marcaProducto').value,
-                Ubicacion: ubicacionVal,
-                Ubicacion_Traslado: ubicacionTrasladoVal,
-                Sucursal: sucursalVal,
-                Causa: causaVal,
-                Cantidad: parseInt(document.getElementById('cantidad').value),
-                Responsable: document.getElementById('responsable').value
-            };
-
-            try {
-                await addDoc(collection(db, "movimientos"), movimiento);
-                
-                document.getElementById('opForm').reset();
-                document.getElementById('skuFinal').value = '';
-                document.getElementById('nombreProducto').value = '';
-                document.getElementById('varProducto').value = '';
-                document.getElementById('tipoProductoVal').value = '';
-                document.getElementById('marcaProducto').value = '';
-                window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
-            } catch (error) {
-                alert("Error al registrar en la nube: " + error.message);
-            }
-        };
-
-        window.solicitarEliminacion = async function(idDoc) {
-            const pinIngresado = prompt("🔒 Ingresa tu PIN para eliminar este registro:");
-            if (pinIngresado === null) return; 
-
-            const PIN_SECRETO = "NRYS";
-
-            if (pinIngresado.trim().toUpperCase() === PIN_SECRETO) {
-                try {
-                    await deleteDoc(doc(db, "movimientos", idDoc));
-                    alert("🗑️ Registro eliminado correctamente.");
-                } catch (error) {
-                    alert("Error al eliminar de la nube: " + error.message);
-                }
-            } else {
-                alert("❌ PIN incorrecto. No se pudo eliminar el registro.");
-            }
-        };
-    </script>
 </body>
 </html>
