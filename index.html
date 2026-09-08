@@ -122,6 +122,16 @@
         }
         #reader { width: 100%; border-radius: 6px; overflow: hidden; }
         .btn-close-scanner { background: #e53935; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
+        
+        .ubicaciones-resultado {
+            background: #f3e5f5;
+            border: 1px solid #d1c4e9;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--minna-dark-purple);
+        }
     </style>
 </head>
 <body>
@@ -235,6 +245,16 @@
                         <option value="Merma por inventario">6. Merma por inventario</option>
                         <option value="Hurto / Extravío">7. Hurto / Extravío</option>
                     </select>
+                </div>
+
+                <!-- BUSCADOR DE UBICACIONES POR PRODUCTO (JUNTO A MERMA / TRASLADO) -->
+                <div class="form-group" id="grupoConsultaUbicaciones" style="display: none;">
+                    <label>Consultar Ubicaciones del Producto:</label>
+                    <div class="input-with-btn">
+                        <input type="text" id="inputConsultaUbicacion" placeholder="Escanea o escribe producto/SKU para ver ubicaciones..." oninput="consultarUbicaciones(this.value)" autocomplete="off">
+                        <button type="button" class="btn-scan" onclick="iniciarEscanner('consulta_ubicacion')">📷 Cámara</button>
+                    </div>
+                    <div id="resultadoUbicacionesBox" style="display: none;" class="ubicaciones-resultado"></div>
                 </div>
 
                 <div class="form-row">
@@ -427,6 +447,7 @@
             const selectSucursal = document.getElementById('sucursalDespacho');
             const grupoCausa = document.getElementById('grupoCausa');
             const selectCausa = document.getElementById('causaMerma');
+            const grupoConsultaUbicaciones = document.getElementById('grupoConsultaUbicaciones');
 
             if (tipo === 'Despacho') {
                 grupoSucursal.style.display = 'block';
@@ -435,6 +456,7 @@
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
+                grupoConsultaUbicaciones.style.display = 'none';
             } else if (tipo === 'Traslado') {
                 grupoSucursal.style.display = 'none';
                 selectSucursal.required = false;
@@ -444,6 +466,7 @@
                 inputTraslado.placeholder = 'Ej. B-03';
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
+                grupoConsultaUbicaciones.style.display = 'block';
             } else if (tipo === 'Merma') {
                 grupoSucursal.style.display = 'none';
                 selectSucursal.required = false;
@@ -452,6 +475,7 @@
                 inputTraslado.value = 'Merma666';
                 grupoCausa.style.display = 'block';
                 selectCausa.required = true;
+                grupoConsultaUbicaciones.style.display = 'block';
             } else {
                 grupoSucursal.style.display = 'none';
                 selectSucursal.required = false;
@@ -459,6 +483,36 @@
                 inputTraslado.required = false;
                 grupoCausa.style.display = 'none';
                 selectCausa.required = false;
+                grupoConsultaUbicaciones.style.display = 'none';
+            }
+        };
+
+        window.consultarUbicaciones = function(valorBusqueda) {
+            const boxRes = document.getElementById('resultadoUbicacionesBox');
+            const query = valorBusqueda.trim().toLowerCase();
+            if (!query) {
+                boxRes.style.display = 'none';
+                boxRes.innerHTML = '';
+                return;
+            }
+
+            // Buscar en el historial todas las ubicaciones asociadas a este SKU o código de barras
+            const ubicacionesEncontradas = new Set();
+            historialArray.forEach(m => {
+                if ((m.SKU && m.SKU.toLowerCase().includes(query)) || 
+                    (m.Barcode && m.Barcode.toLowerCase().includes(query)) ||
+                    (m.Producto && m.Producto.toLowerCase().includes(query))) {
+                    if (m.Ubicacion) ubicacionesEncontradas.add(m.Ubicacion);
+                    if (m.Ubicacion_Traslado && m.Ubicacion_Traslado !== 'Merma666') ubicacionesEncontradas.add(m.Ubicacion_Traslado);
+                }
+            });
+
+            if (ubicacionesEncontradas.size > 0) {
+                boxRes.style.display = 'block';
+                boxRes.innerHTML = `<strong>Ubicaciones detectadas:</strong> ${Array.from(ubicacionesEncontradas).join(', ')}`;
+            } else {
+                boxRes.style.display = 'block';
+                boxRes.innerHTML = `<em>No se encontraron registros previos con ubicaciones para este producto.</em>`;
             }
         };
 
@@ -489,6 +543,9 @@
                 window.filtrarSugerencias(decodedText);
             } else if (destinoEscaneo === 'ubicacion') {
                 document.getElementById('ubicacion').value = decodedText;
+            } else if (destinoEscaneo === 'consulta_ubicacion') {
+                document.getElementById('inputConsultaUbicacion').value = decodedText;
+                window.consultarUbicaciones(decodedText);
             }
         }
 
@@ -634,6 +691,7 @@
                 document.getElementById('varProducto').value = '';
                 document.getElementById('tipoProductoVal').value = '';
                 document.getElementById('marcaProducto').value = '';
+                document.getElementById('resultadoUbicacionesBox').style.display = 'none';
                 window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
             } catch (error) {
                 alert("Error al registrar en la nube: " + error.message);
