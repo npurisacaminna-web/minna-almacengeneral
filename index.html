@@ -816,7 +816,8 @@
         };
 
         // Busca, dentro de las ubicaciones internas del almacén (calculadas del historial),
-        // cuál tiene más stock disponible para ese código de barras. Esa es la "más cercana".
+        // cuál es la más cercana para el picker: se ordenan por andamio (A a Z), luego
+        // nivel (1 a 5) y finalmente posición (1 a 3), y se toma la primera que tenga stock.
         function buscarUbicacionSugerida(barcode) {
             const item = maestroSkuDb[(barcode || '').trim()];
             if (!item || !item.sku) {
@@ -824,18 +825,14 @@
             }
 
             const stockPorUbicacion = calcularStockPorUbicacion(item.sku);
-            let mejorUbicacion = '';
-            let mejorStock = 0;
-            Object.entries(stockPorUbicacion).forEach(([ubi, stock]) => {
-                if (ubi !== 'Sin ubicación' && stock > mejorStock) {
-                    mejorStock = stock;
-                    mejorUbicacion = ubi;
-                }
-            });
+            const ubicacionesConStock = Object.entries(stockPorUbicacion)
+                .filter(([ubi, stock]) => ubi !== 'Sin ubicación' && stock > 0)
+                .sort(([a], [b]) => compararCercaniaUbicaciones(a, b));
 
-            if (!mejorUbicacion) {
+            if (ubicacionesConStock.length === 0) {
                 return { texto: 'No encontrado (0 disp.)', ubicacion: '', sku: item.sku };
             }
+            const [mejorUbicacion, mejorStock] = ubicacionesConStock[0];
             return { texto: `${mejorUbicacion} (${mejorStock} disp.)`, ubicacion: mejorUbicacion, sku: item.sku };
         }
 
@@ -996,10 +993,35 @@
             return stockPorUbicacion;
         }
 
+        // Parsea un código de ubicación tipo "A-01-01" en sus partes (andamio, nivel,
+        // posición) para poder ordenarlas por cercanía real dentro del almacén.
+        function parsearCodigoUbicacion(codigo) {
+            const match = /^([A-Za-z]+)-(\d+)-(\d+)$/.exec((codigo || '').trim());
+            if (!match) return null;
+            return { letra: match[1].toUpperCase(), nivel: parseInt(match[2], 10), posicion: parseInt(match[3], 10) };
+        }
+
+        // Ordena dos ubicaciones de la más cercana a la más lejana para el picker:
+        // primero por andamio (A a Z), luego por nivel (1 a 5) y finalmente por
+        // posición (1 a 3/4). Si alguna ubicación no tiene ese formato, cae a orden
+        // alfabético simple.
+        function compararCercaniaUbicaciones(a, b) {
+            const pa = parsearCodigoUbicacion(a);
+            const pb = parsearCodigoUbicacion(b);
+            if (pa && pb) {
+                if (pa.letra !== pb.letra) return pa.letra.localeCompare(pb.letra);
+                if (pa.nivel !== pb.nivel) return pa.nivel - pb.nivel;
+                return pa.posicion - pb.posicion;
+            }
+            return (a || '').localeCompare(b || '');
+        }
+
         // Rellena el selector de ubicaciones para Despacho: todas las ubicaciones con stock
-        // disponible para ese SKU. Todo producto tiene ubicación, así que ya NO existe la
-        // opción "No encontrado" — si no hay ninguna ubicación con stock, se avisa para
-        // corregir el inventario en vez de permitir un registro sin ubicación real.
+        // disponible para ese SKU, ordenadas de la más cercana a la más lejana para el
+        // picker (andamio A-Z, nivel 1-5, posición 1-3). Todo producto tiene ubicación,
+        // así que ya NO existe la opción "No encontrado" — si no hay ninguna ubicación
+        // con stock, se avisa para corregir el inventario en vez de permitir un registro
+        // sin ubicación real.
         function actualizarUbicacionesDespacho(sku) {
             const selector = document.getElementById('ubicacionDespacho');
             if (!selector) return;
@@ -1007,7 +1029,7 @@
             const stockPorUbicacion = calcularStockPorUbicacion(sku);
             const ubicacionesConStock = Object.entries(stockPorUbicacion)
                 .filter(([ubicacion, stock]) => ubicacion !== 'Sin ubicación' && stock > 0)
-                .sort(([ubicacionA], [ubicacionB]) => ubicacionA.localeCompare(ubicacionB));
+                .sort(([ubicacionA], [ubicacionB]) => compararCercaniaUbicaciones(ubicacionA, ubicacionB));
 
             selector.innerHTML = '<option value="">Selecciona una ubicación...</option>';
             ubicacionesConStock.forEach(([ubicacion, stock]) => {
@@ -1139,11 +1161,12 @@
 
                     if (ubi) {
                         if (!stockPorUbicacion[ubi]) stockPorUbicacion[ubi] = 0;
-                        if (op === 'Recepción' || op === 'Traslado') {
-                            // Si es la ubicación principal de entrada o llegada de traslado
-                            if (op === 'Recepción') stockPorUbicacion[ubi] += cant;
-                        }
-                        if (op === 'Despacho') {
+                        if (op === 'Recepción') {
+                            stockPorUbicacion[ubi] += cant;
+                        } else if (op === 'Despacho' || op === 'Merma' || op === 'Traslado') {
+                            // El Traslado también resta de su ubicación de origen: si no,
+                            // la ubicación de la que salió el producto sigue mostrando
+                            // stock aunque ya se trasladó todo (bug reportado).
                             stockPorUbicacion[ubi] -= cant;
                         }
                     }
@@ -1687,15 +1710,24 @@
                 { id: 'F', orientacion: 'z', origenX: 6, origenZ: 4, posiciones: 4 },
                 { id: 'G', orientacion: 'z', origenX: 6, origenZ: 8, posiciones: 3 },
                 { id: 'H', orientacion: 'x', origenX: 7, origenZ: 10, posiciones: 4 },
-                { id: 'C', orientacion: 'z', origenX: 0, origenZ: 4, posiciones: 4 },
-                { id: 'B', orientacion: 'z', origenX: 0, origenZ: 8, posiciones: 4 },
+                { id: 'C', orientacion: 'z', origenX: 1.5, origenZ: 6, posiciones: 4 },
+                { id: 'B', orientacion: 'z', origenX: 1.5, origenZ: 10, posiciones: 4 },
                 { id: 'A', orientacion: 'z', origenX: 6, origenZ: 12, posiciones: 4 },
-                { id: 'I', orientacion: 'z', origenX: 15, origenZ: 8, posiciones: 4 }
+                { id: 'I', orientacion: 'z', origenX: 17, origenZ: 8, posiciones: 4 }
             ];
             const ZONAS_3D = [
-                { texto: 'ZONA DE DESPACHO', x: 0, z: 2, ancho: 1.4, profundo: 3.4, color: 0xffffff },
-                { texto: 'ZONA DE PREPARACIÓN', x: 12, z: 9, ancho: 3.4, profundo: 1.4, color: 0xffffff },
-                { texto: 'MERMA666', x: 15.3, z: 9, ancho: 1.4, profundo: 3.4, color: 0xfff3e0 }
+                { texto: 'ZONA DE DESPACHO', x: 0, z: 2.9, ancho: 1.6, profundo: 4.8, color: 0xffffff }
+            ];
+            // Mesas (mobiliario, no son ubicaciones de stock):
+            // - Mesa larga de despacho, junto al andamio D (con más espacio ahora
+            //   que C y B se corrieron más lejos de D para que la mesa quepa larga).
+            // - Una sola mesa en FORMA DE L (dos tramos que forman una esquina):
+            //   un brazo dice "ZONA DE PREPARACIÓN" y el otro "MERMA 666".
+            //   Después de esta mesa en L sigue el andamio I.
+            const MESAS_3D = [
+                { texto: 'MESA', x: 0.6, z: 2.9, ancho: 1.0, profundo: 4.2, alto: 0.45 },
+                { texto: 'ZONA DE PREPARACIÓN', x: 12.6, z: 10, ancho: 4.8, profundo: 1.0, alto: 0.45 },
+                { texto: 'MERMA 666', x: 15.5, z: 7.75, ancho: 1.0, profundo: 3.5, alto: 0.45 }
             ];
             const SPACING = 1.0;
             const CAJA = 0.82;
@@ -1842,6 +1874,19 @@
                     const etiqueta = crearEtiqueta(zona.texto, '#5e35b1');
                     etiqueta.position.set(zona.x, 0.5, zona.z);
                     scene.add(etiqueta);
+                });
+
+                // Mesas (mobiliario): una cajita café con su etiqueta encima
+                MESAS_3D.forEach(mesa => {
+                    const tablero = new THREE.Mesh(
+                        new THREE.BoxGeometry(mesa.ancho, mesa.alto, mesa.profundo),
+                        new THREE.MeshStandardMaterial({ color: 0x8d6e63 })
+                    );
+                    tablero.position.set(mesa.x, mesa.alto / 2, mesa.z);
+                    scene.add(tablero);
+                    const etiquetaMesa = crearEtiqueta(mesa.texto, '#4e342e');
+                    etiquetaMesa.position.set(mesa.x, mesa.alto + 0.35, mesa.z);
+                    scene.add(etiquetaMesa);
                 });
 
                 // Cajas de cada ubicación (todas las posiciones x niveles de los 9 andamios)
