@@ -235,6 +235,12 @@
                 <div class="rf-field">📋 Cantidad Asignada (Reestock): <span id="rfCantidadAsignada" style="color:#ffeb3b; font-size:14px;">-</span></div>
                 
                 <div class="rf-input-group">
+                    <label style="color:#cfd8dc;">Escanear Código de Barras:</label>
+                    <div class="input-with-btn" style="margin-bottom: 8px;">
+                        <input type="text" id="rfInputEscaneo" placeholder="Escanee o escriba el código..." style="background:#263238; color:white; border-color:#546e7a;" autocomplete="off">
+                        <button type="button" class="btn-scan" onclick="iniciarEscanner('rf_picking')">📷 Cámara</button>
+                    </div>
+
                     <label style="color:#cfd8dc;">Cantidad Real Confirmada por el Picker:</label>
                     <div class="input-with-btn">
                         <input type="number" id="rfCantidadInput" min="0" placeholder="Cantidad..." style="background:#263238; color:white; border-color:#546e7a;">
@@ -549,35 +555,10 @@
                 const workbook = XLSX.read(data, {type: 'array'});
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
                 
-                // Leemos las filas en formato array de arrays (header: 1) para ubicar exactamente por columna (G = columna index 6, H = index 7)
-                const rowsArray = XLSX.utils.sheet_to_json(firstSheet, {header: 1, range: 5});
-
+                const rowsObj = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
                 maestroSkuDb = {};
                 stockSistemaDb = {};
 
-                rowsArray.forEach(row => {
-                    if (!row || row.length === 0) return;
-
-                    let barcode = String(row[3] || '').trim(); // Columna D (índice 3) normalmente en tu reporte
-                    let sku = String(row[4] || '').trim();     // Columna E (índice 4)
-                    let stock = parseNumeroSeguro(row[5]);     // Columna F (índice 5)
-                    
-                    // CORRECCIÓN ESTRICTA: Leemos exclusivamente de la columna G (índice 6) para el Costo Unitario
-                    let costoUnitario = parseNumeroSeguro(row[6]); 
-
-                    // Intentamos rescatar datos adicionales barriendo las celdas disponibles
-                    let producto = "", variante = "", tipo = "", marca = "";
-                    row.forEach((cellVal, colIdx) => {
-                        // O si el archivo maestro principal tiene otra estructura (como el primer excel maestro)
-                        // Soportamos ambos formatos mapeando por texto exacto o posición
-                    });
-
-                    // Búsqueda alternativa si el archivo es el maestro de productos estándar (con celdas nombradas)
-                    // Vamos a leer también con sheet_to_json normal por si acaso para llenar campos descriptivos
-                });
-
-                // Hacemos un segundo recorrido usando el lector por objetos para asegurar nombres de productos, marcas y variantes
-                const rowsObj = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
                 rowsObj.forEach(row => {
                     const keys = Object.keys(row);
                     let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "", stock = 0, costoUnitario = 0;
@@ -592,13 +573,11 @@
                         if (kLower === "marca") marca = String(row[k] || '');
                         if (kLower === "stock") stock = parseNumeroSeguro(row[k]);
                         
-                        // CORRECCIÓN DEFINITIVA COLUMNA G: Buscamos explícitamente "unitario" y bloqueamos "total"
                         if (kLower.includes("unitario") || (kLower.includes("costo") && kLower.includes("prom") && !kLower.includes("total"))) {
                             costoUnitario = parseNumeroSeguro(row[k]);
                         }
                     });
 
-                    // Forzar lectura por posición exacta de columna G si viene en las claves crudas del objeto (__EMPTY_6 o similar)
                     keys.forEach(k => {
                         if (k.includes('__EMPTY_6') || k === 'G' || k.toLowerCase().includes('costo neto prom. unitario')) {
                             const valG = parseNumeroSeguro(row[k]);
@@ -714,6 +693,7 @@
             document.getElementById('rfProducto').innerText = `${nombreProd} ${varProd ? '('+varProd+')' : ''}`;
             document.getElementById('rfCantidadAsignada').innerText = tarea.cantidadAsignada;
             document.getElementById('rfCantidadInput').value = tarea.cantidadAsignada;
+            document.getElementById('rfInputEscaneo').value = ''; // Limpiar el escaneo anterior
 
             const stockUbi = calcularStockPorUbicacion(skuReal);
             let ubiTexto = [];
@@ -725,7 +705,26 @@
 
         window.confirmarTareaRf = async function() {
             const tarea = tareasPickingArray[indiceTareaActual];
+            const codigoEscaneado = document.getElementById('rfInputEscaneo').value.trim();
             const cantReal = parseInt(document.getElementById('rfCantidadInput').value);
+
+            let infoProd = maestroSkuDb[tarea.codigo] || Object.values(maestroSkuDb).find(p => p.sku === tarea.codigo || p.barcode === tarea.codigo);
+            let skuReal = infoProd ? infoProd.sku : tarea.codigo;
+            let barcodeReal = infoProd ? infoProd.barcode : tarea.codigo;
+
+            if (!codigoEscaneado) {
+                alert('⚠️ Debes escanear o ingresar el código de barras/SKU para corroborar el producto.');
+                document.getElementById('rfInputEscaneo').focus();
+                return;
+            }
+
+            if (codigoEscaneado.toLowerCase() !== String(skuReal).toLowerCase() && 
+                codigoEscaneado.toLowerCase() !== String(barcodeReal).toLowerCase()) {
+                alert(`❌ ¡Error de Picking! El código escaneado (${codigoEscaneado}) no corresponde al producto de esta tarea (${skuReal} / ${barcodeReal}).`);
+                document.getElementById('rfInputEscaneo').focus();
+                document.getElementById('rfInputEscaneo').select();
+                return;
+            }
 
             if (isNaN(cantReal) || cantReal < 0) {
                 alert('Por favor ingresa una cantidad válida.');
@@ -738,14 +737,12 @@
                 return;
             }
 
-            let infoProd = maestroSkuDb[tarea.codigo] || Object.values(maestroSkuDb).find(p => p.sku === tarea.codigo || p.barcode === tarea.codigo);
-            let skuFinal = infoProd ? infoProd.sku : tarea.codigo;
             let prodNombre = infoProd ? infoProd.producto : (tarea.producto || 'Producto');
             let prodVar = infoProd ? infoProd.variante : (tarea.variante || '');
             let prodTipo = infoProd ? infoProd.tipo : '';
             let prodMarca = infoProd ? infoProd.marca : '';
 
-            const stockUbi = calcularStockPorUbicacion(skuFinal);
+            const stockUbi = calcularStockPorUbicacion(skuReal);
             let ubiElegida = 'Sin ubicación';
             for (const [ubi, cant] of Object.entries(stockUbi)) {
                 if (cant > 0) {
@@ -758,8 +755,8 @@
                 Fecha: new Date().toLocaleString(),
                 Timestamp: Date.now(),
                 Operacion: 'Despacho',
-                Barcode: tarea.codigo,
-                SKU: skuFinal,
+                Barcode: barcodeReal || tarea.codigo,
+                SKU: skuReal,
                 Producto: prodNombre,
                 Variante: prodVar,
                 Tipo: prodTipo,
@@ -1052,6 +1049,8 @@
             } else if (destinoEscaneo === 'consulta_ubicacion') {
                 document.getElementById('inputConsultaUbicacion').value = decodedText;
                 window.consultarUbicaciones(decodedText);
+            } else if (destinoEscaneo === 'rf_picking') {
+                document.getElementById('rfInputEscaneo').value = decodedText;
             }
         }
 
