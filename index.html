@@ -62,27 +62,12 @@
         .btn-scan:hover { background: var(--minna-dark-purple); }
 
         .suggestions-box {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 1px solid #d1c4e9;
-            border-top: none;
-            border-radius: 0 0 6px 6px;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
+            position: absolute; top: 100%; left: 0; right: 0;
+            background: white; border: 1px solid #d1c4e9; border-top: none;
+            border-radius: 0 0 6px 6px; max-height: 200px; overflow-y: auto; z-index: 1000;
             box-shadow: 0 4px 8px rgba(0,0,0,0.12);
         }
-        .suggestion-item {
-            padding: 10px;
-            cursor: pointer;
-            font-size: 12px;
-            border-bottom: 1px solid #f9f8fb;
-            display: flex;
-            justify-content: space-between;
-        }
+        .suggestion-item { padding: 10px; cursor: pointer; font-size: 12px; border-bottom: 1px solid #f9f8fb; display: flex; justify-content: space-between; }
         .suggestion-item:hover { background-color: #f3e5f5; color: var(--minna-dark-purple); }
 
         .btn-primary { background: var(--minna-dark-purple); color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 14px; margin-top: 10px; }
@@ -105,72 +90,31 @@
         th { background-color: #f3e5f5; color: var(--minna-dark-purple); font-weight: 700; }
         .full-width { grid-column: 1 / -1; }
 
+        /* Estilo Consola RF */
+        .rf-console { background: #263238; color: #eceff1; border-radius: 10px; padding: 15px; margin-bottom: 15px; border: 1px solid #37474f; }
+        .rf-console h3 { color: #ffb74d; border-bottom: 2px solid #ffa726; margin-top: 0; }
+        .rf-task-card { background: #37474f; padding: 15px; border-radius: 8px; margin-top: 10px; border-left: 5px solid #ffb74d; }
+
         #modalScanner {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            padding: 15px;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 9999; justify-content: center; align-items: center; flex-direction: column; padding: 15px;
         }
-        .scanner-container {
-            background: white;
-            padding: 15px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 400px;
-            text-align: center;
-        }
+        .scanner-container { background: white; padding: 15px; border-radius: 12px; width: 100%; max-width: 400px; text-align: center; }
         #reader { width: 100%; border-radius: 6px; overflow: hidden; }
         .btn-close-scanner { background: #e53935; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; width: 100%; margin-top: 10px; cursor: pointer; }
         
         .ubicaciones-resultado {
-            background: #f3e5f5;
-            border: 1px solid #d1c4e9;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 8px;
-            font-size: 12px;
-            color: var(--minna-dark-purple);
+            background: #f3e5f5; border: 1px solid #d1c4e9; padding: 12px; border-radius: 6px; margin-top: 8px; font-size: 12px; color: var(--minna-dark-purple);
         }
         .ubicaciones-resultado ul { margin: 5px 0 0 15px; padding: 0; }
 
-        #modalResponsable {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(94, 53, 177, 0.97);
-            z-index: 10000;
-            justify-content: center;
-            align-items: center;
-            padding: 15px;
+        #modalResponsable, #modalPin {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(94, 53, 177, 0.97); z-index: 10000; justify-content: center; align-items: center; padding: 15px;
         }
-        .responsable-modal-box {
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            width: 100%;
-            max-width: 380px;
-            text-align: center;
-        }
+        .responsable-modal-box { background: white; padding: 25px; border-radius: 12px; width: 100%; max-width: 380px; text-align: center; }
         .responsable-modal-box h2 { color: var(--minna-dark-purple); margin-top: 0; font-size: 19px; }
         .responsable-modal-box p { font-size: 13px; color: #546e7a; }
-
-        .rf-console {
-            background: #263238;
-            color: #eceff1;
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 15px;
-            border: 2px solid var(--minna-accent);
-        }
-        .rf-console h4 { margin-top: 0; color: #ffeb3b; font-size: 14px; border-bottom: 1px solid #455a64; padding-bottom: 6px; }
-        .rf-field { margin-bottom: 8px; font-size: 13px; }
-        .rf-field span { color: #cfd8dc; font-weight: bold; }
-        .rf-input-group { background: #37474f; padding: 10px; border-radius: 6px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -184,7 +128,7 @@
         </div>
     </header>
 
-    <div id="modalPin" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(94, 53, 177, 0.97); z-index: 10001; justify-content: center; align-items: center; padding: 15px;">
+    <div id="modalPin" style="z-index: 10001;">
         <div class="responsable-modal-box">
             <h2>🔒 Acceso Restringido</h2>
             <p>Esta app es de uso interno de Minna S.A.C. Ingresa el PIN de acceso para continuar.</p>
@@ -199,7 +143,7 @@
     <div id="modalResponsable">
         <div class="responsable-modal-box">
             <h2>👋 ¡Bienvenido/a!</h2>
-            <p>Indica quién eres. Este nombre se usará como responsable en todas las operaciones que registres (Recepción, Despacho, Traslado y Merma).</p>
+            <p>Indica quién eres. Este nombre se usará como responsable en todas las operaciones que registres.</p>
             <div class="form-group" style="text-align:left;">
                 <label>Tu nombre:</label>
                 <input type="text" id="inputResponsableModal" list="listaResponsables" placeholder="Escribe tu nombre..." autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault(); confirmarResponsable();}">
@@ -210,47 +154,51 @@
 
     <div class="main-container">
         
+        <!-- COLUMNA IZQUIERDA: OPERACIONES Y CONSOLA RF -->
         <div class="card">
             <h3>1. Cargar Excel Maestro de Productos</h3>
             <div class="form-group">
                 <label>Selecciona tu archivo de Excel (.xlsx / .xls):</label>
                 <input type="file" id="excelMaestroFile" accept=".xlsx, .xls" onchange="cargarMaestroExcel(event)" style="background: #f9f8fb; padding: 6px;">
                 <small id="statusMaestro" style="color: #78909c; font-weight: 600; display: block; margin-top: 5px;">Esperando archivo Excel...</small>
-                <small style="color:#78909c; display:block; margin-top:4px;">Este mismo archivo carga los productos y el stock/costo del sistema (para el ERI).</small>
             </div>
 
-            <h3 style="margin-top: 20px;">📦 Consola de Picking por Tareas (Estilo RF)</h3>
-            <div class="form-group">
-                <label>Cargar Excel de Picking (Reestock / Pedidos):</label>
-                <input type="file" id="excelPickingFile" accept=".xlsx, .xls" onchange="cargarExcelPicking(event)" style="background: #f9f8fb; padding: 6px;">
-                <small style="color:#78909c; display:block; margin-top:4px;">Sube tu archivo de reestock/picking para empezar la lista de tareas guiada.</small>
-            </div>
-
-            <div id="contenedorRfConsole" style="display: none;" class="rf-console">
-                <h4 id="rfTaskTitle">Tarea 0 de 0</h4>
-                <div class="rf-field">🏢 Sucursal: <span id="rfSucursal">-</span></div>
-                <div class="rf-field">barcode / SKU: <span id="rfCodigo">-</span></div>
-                <div class="rf-field">📦 Producto: <span id="rfProducto">-</span></div>
-                <div class="rf-field">📍 Ubicación en Almacén: <span id="rfUbicacion" style="color:#81c784; font-size:14px;">-</span></div>
-                <div class="rf-field">📋 Cantidad Asignada (Reestock): <span id="rfCantidadAsignada" style="color:#ffeb3b; font-size:14px;">-</span></div>
-                
-                <div class="rf-input-group">
-                    <label style="color:#cfd8dc;">Escanear Código de Barras:</label>
-                    <div class="input-with-btn" style="margin-bottom: 8px;">
-                        <input type="text" id="rfInputEscaneo" placeholder="Escanee o escriba el código..." style="background:#263238; color:white; border-color:#546e7a;" autocomplete="off">
-                        <button type="button" class="btn-scan" onclick="iniciarEscanner('rf_picking')">📷 Cámara</button>
-                    </div>
-
-                    <label style="color:#cfd8dc;">Cantidad Real Confirmada por el Picker:</label>
-                    <div class="input-with-btn">
-                        <input type="number" id="rfCantidadInput" min="0" placeholder="Cantidad..." style="background:#263238; color:white; border-color:#546e7a;">
-                        <button type="button" class="btn-primary" style="margin-top:0; padding:9px 15px;" onclick="confirmarTareaRf()">Aceptar ➡️</button>
+            <!-- CONSOLA DE PICKING POR TAREAS (ESTILO RF) -->
+            <div class="rf-console" style="margin-top: 20px;">
+                <h3>📦 Consola de Picking por Tareas (Estilo RF)</h3>
+                <div class="form-group" style="margin-bottom: 5px;">
+                    <label style="color: #eceff1;">Cargar Excel de Picking (Reestock / Pedidos):</label>
+                    <input type="file" id="excelPickingFile" accept=".xlsx, .xls" onchange="cargarExcelPicking(event)" style="background: #37474f; color: white; padding: 6px; border: 1px solid #546e7a;">
+                </div>
+                <div id="rfTaskContainer" style="display: none;">
+                    <div class="rf-task-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong id="rfTaskCounter" style="color: #ffb74d; font-size: 14px;">Tarea 1 de 1</strong>
+                            <button type="button" id="btnMermaSaltar" style="background: #e53935; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; cursor: pointer; display: none;" onclick="saltarTareaMerma()">⚠️ Ubicación de Merma - Siguiente</button>
+                        </div>
+                        <p style="margin: 4px 0; font-size: 12px;">🏢 Sucursal: <strong id="rfSucursal">-</strong></p>
+                        <p style="margin: 4px 0; font-size: 12px;">barcode / SKU: <strong id="rfSku">-</strong></p>
+                        <p style="margin: 4px 0; font-size: 12px;">📦 Producto: <strong id="rfProducto">-</strong></p>
+                        <p style="margin: 4px 0; font-size: 12px;">📍 Ubicación Sugerida (Más cercana): <strong id="rfUbicacion" style="color: #66bb6a;">-</strong></p>
+                        <p style="margin: 4px 0; font-size: 12px;">📋 Cantidad Requerida: <strong id="rfCantidadReq" style="color: #ffb74d;">-</strong></p>
+                        
+                        <div class="form-group" style="margin-top: 10px; margin-bottom: 8px;">
+                            <label style="color: #eceff1; font-size: 11px;">Escanear Código de Barras:</label>
+                            <div class="input-with-btn">
+                                <input type="text" id="rfInputScan" placeholder="Escanee o escriba código..." autocomplete="off">
+                                <button type="button" class="btn-scan" onclick="iniciarEscanner('rf_scan')">📷 Cámara</button>
+                            </div>
+                        </div>
+                        <div class="form-group" style="margin-bottom: 8px;">
+                            <label style="color: #eceff1; font-size: 11px;">Cantidad Real Confirmada:</label>
+                            <input type="number" id="rfInputCant" min="0">
+                        </div>
+                        <button type="button" class="btn-primary" style="background: #43a047; margin-top: 5px;" onclick="confirmarTareaPicking()">Aceptar ➔</button>
                     </div>
                 </div>
             </div>
 
-            <h3 style="margin-top: 25px;">2. Registrar Operación Manual</h3>
-            
+            <h3 style="margin-top: 20px;">2. Registrar Operación Manual</h3>
             <div class="form-group">
                 <label>Tipo de Operación:</label>
                 <div class="tabs">
@@ -263,7 +211,6 @@
 
             <form id="opForm" onsubmit="registrarMovimiento(event)">
                 <input type="hidden" id="tipoOperacionVal" value="Recepción">
-
                 <div class="form-group">
                     <label>Escanear Código de Barras o Escribir Producto / SKU:</label>
                     <div class="input-with-btn">
@@ -274,31 +221,16 @@
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>SKU:</label>
-                        <input type="text" id="skuFinal" readonly placeholder="Automático">
-                    </div>
-                    <div class="form-group">
-                        <label>Tipo de Producto:</label>
-                        <input type="text" id="tipoProductoVal" readonly placeholder="Automático">
-                    </div>
+                    <div class="form-group"><label>SKU:</label><input type="text" id="skuFinal" readonly placeholder="Automático"></div>
+                    <div class="form-group"><label>Tipo de Producto:</label><input type="text" id="tipoProductoVal" readonly placeholder="Automático"></div>
                 </div>
 
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>Producto:</label>
-                        <input type="text" id="nombreProducto" readonly placeholder="Automático">
-                    </div>
-                    <div class="form-group">
-                        <label>Variante:</label>
-                        <input type="text" id="varProducto" readonly placeholder="Automático">
-                    </div>
+                    <div class="form-group"><label>Producto:</label><input type="text" id="nombreProducto" readonly placeholder="Automático"></div>
+                    <div class="form-group"><label>Variante:</label><input type="text" id="varProducto" readonly placeholder="Automático"></div>
                 </div>
 
-                <div class="form-group">
-                    <label>Marca:</label>
-                    <input type="text" id="marcaProducto" readonly placeholder="Automático">
-                </div>
+                <div class="form-group"><label>Marca:</label><input type="text" id="marcaProducto" readonly placeholder="Automático"></div>
 
                 <div class="form-row">
                     <div class="form-group">
@@ -307,7 +239,7 @@
                             <input type="text" id="ubicacion" placeholder="Ej. A-01" required>
                             <button type="button" class="btn-scan" onclick="iniciarEscanner('ubicacion')">📷 Cámara</button>
                         </div>
-                        <select id="ubicacionDespacho" style="display: none;" aria-label="Ubicación de despacho" onchange="window.manejarCambioUbicacionDespacho(this)"></select>
+                        <select id="ubicacionDespacho" style="display: none;" onchange="window.manejarCambioUbicacionDespacho(this)"></select>
                     </div>
                     <div class="form-group" id="grupoUbicacionTraslado" style="display: none;">
                         <label id="lblUbicacionTraslado">Ubicación de traslado:</label>
@@ -346,22 +278,16 @@
                     </select>
                 </div>
 
-                <div class="form-group">
-                    <label>Cantidad:</label>
-                    <input type="number" id="cantidad" min="1" placeholder="Ej. 10" required>
-                </div>
+                <div class="form-group"><label>Cantidad:</label><input type="number" id="cantidad" min="1" placeholder="Ej. 10" required></div>
                 <datalist id="listaResponsables"></datalist>
 
                 <button type="submit" class="btn-primary">Registrar en la Nube</button>
             </form>
         </div>
 
+        <!-- COLUMNA DERECHA: CONSULTAS Y REPORTES -->
         <div class="card">
             <h3>🔍 Consultar Ubicación y Stock de Producto</h3>
-            <p style="font-size: 12px; color: #546e7a; margin-bottom: 10px;">
-                Escanea o escribe el producto/SKU para ver instantáneamente en qué ubicaciones se encuentra y qué cantidad hay en cada una.
-            </p>
-            
             <div class="form-group" style="margin-bottom: 5px;">
                 <label>Escanear Código de Barras o Escribir Producto / SKU:</label>
                 <div class="input-with-btn">
@@ -369,14 +295,10 @@
                     <button type="button" class="btn-scan" onclick="iniciarEscanner('consulta_ubicacion')">📷 Cámara</button>
                 </div>
             </div>
-
             <div id="resultadoUbicacionesBox" style="display: none;" class="ubicaciones-resultado"></div>
             
             <div style="margin-top: 25px;">
                 <h3>Estado del Sistema en Vivo</h3>
-                <p style="font-size: 13px; color: #546e7a; line-height: 1.5;">
-                    Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
-                </p>
                 <div style="margin-top: 15px; text-align: center; display: flex; flex-direction: column; gap: 10px;">
                     <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
                     <button class="btn-excel" style="background: var(--minna-dark-purple);" onclick="exportarInventarioERI()">📦 Descargar Inventario (Faltantes / Sobrantes / ERI)</button>
@@ -386,26 +308,18 @@
             </div>
         </div>
 
+        <!-- HISTORIAL GLOBAL -->
         <div class="card full-width">
             <h3>Historial Global Sincronizado</h3>
             <div class="table-responsive">
                 <table id="tablaHistorial">
                     <thead>
                         <tr>
-                            <th>Fecha / Hora</th>
-                            <th>Operación</th>
-                            <th>Cód. Barras</th>
-                            <th>SKU</th>
-                            <th>Producto</th>
-                            <th>Variante</th>
-                            <th>Tipo</th>
-                            <th>Marca</th>
-                            <th>Ubicación</th>
+                            <th>Fecha / Hora</th><th>Operación</th><th>Cód. Barras</th><th>SKU</th><th>Producto</th>
+                            <th>Variante</th><th>Tipo</th><th>Marca</th><th>Ubicación</th>
                             <th id="thDetalle" style="display: none;">Detalle / Destino</th>
                             <th id="thCausa" style="display: none;">Causa</th>
-                            <th>Cant.</th>
-                            <th>Responsable</th>
-                            <th>Acciones</th>
+                            <th>Cant.</th><th>Responsable</th><th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -429,7 +343,8 @@
         let html5QrCode = null;
         let destinoEscaneo = '';
         let responsableActual = '';
-
+        
+        // Variables para la consola RF de Picking
         let tareasPickingArray = [];
         let indiceTareaActual = 0;
 
@@ -437,49 +352,33 @@
             const savedDb = localStorage.getItem('minna_maestro_db');
             if (savedDb) {
                 maestroSkuDb = JSON.parse(savedDb);
-                const totalProds = Object.keys(maestroSkuDb).length;
-                document.getElementById('statusMaestro').innerText = `Maestro cargado (${totalProds} productos)`;
+                document.getElementById('statusMaestro').innerText = `Maestro cargado (${Object.keys(maestroSkuDb).length} productos)`;
                 document.getElementById('statusMaestro').style.color = '#2e7d32';
             }
-
-            const savedStockSistema = localStorage.getItem('minna_stock_sistema_db');
-            if (savedStockSistema) {
-                stockSistemaDb = JSON.parse(savedStockSistema);
+            if (localStorage.getItem('minna_stock_sistema_db')) {
+                stockSistemaDb = JSON.parse(localStorage.getItem('minna_stock_sistema_db'));
             }
-
             cargarResponsablesGuardados();
-
-            const ultimaSucursal = localStorage.getItem('minna_ultima_sucursal');
-            if (ultimaSucursal) {
-                document.getElementById('sucursalDespacho').value = ultimaSucursal;
-            }
-
             window.verificarAccesoPin();
         };
 
         const PIN_ACCESO_APP = "MINNA2026";
-
         window.verificarAccesoPin = function() {
             if (sessionStorage.getItem('minna_pin_ok') === '1') {
                 window.abrirModalResponsable();
                 return;
             }
             document.getElementById('modalPin').style.display = 'flex';
-            setTimeout(() => {
-                const input = document.getElementById('inputPinAcceso');
-                if (input) input.focus();
-            }, 100);
         };
 
         window.confirmarPinAcceso = function() {
             const pinInput = document.getElementById('inputPinAcceso');
-            const valor = (pinInput.value || '').trim().toUpperCase();
-            if (valor === PIN_ACCESO_APP) {
+            if ((pinInput.value || '').trim().toUpperCase() === PIN_ACCESO_APP) {
                 sessionStorage.setItem('minna_pin_ok', '1');
                 document.getElementById('modalPin').style.display = 'none';
                 window.abrirModalResponsable();
             } else {
-                alert('❌ PIN incorrecto. No tienes acceso a esta app.');
+                alert('❌ PIN incorrecto.');
                 pinInput.value = '';
                 pinInput.focus();
             }
@@ -491,48 +390,32 @@
         }
 
         function cargarResponsablesGuardados() {
-            const lista = obtenerResponsablesGuardados();
             const datalist = document.getElementById('listaResponsables');
             datalist.innerHTML = '';
-            lista.forEach(nombre => {
+            obtenerResponsablesGuardados().forEach(nombre => {
                 const opt = document.createElement('option');
                 opt.value = nombre;
                 datalist.appendChild(opt);
             });
         }
 
-        function guardarResponsableSiEsNuevo(nombre) {
-            nombre = (nombre || '').trim();
-            if (!nombre) return;
+        window.abrirModalResponsable = function() {
+            document.getElementById('inputResponsableModal').value = responsableActual || localStorage.getItem('minna_ultimo_responsable') || '';
+            document.getElementById('modalResponsable').style.display = 'flex';
+            setTimeout(() => document.getElementById('inputResponsableModal').focus(), 100);
+        };
+
+        window.confirmarResponsable = function() {
+            const nombre = document.getElementById('inputResponsableModal').value.trim();
+            if (!nombre) { alert('Escribe tu nombre.'); return; }
+            responsableActual = nombre;
             let lista = obtenerResponsablesGuardados();
-            const yaExiste = lista.some(n => n.toLowerCase() === nombre.toLowerCase());
-            if (!yaExiste) {
+            if (!lista.some(n => n.toLowerCase() === nombre.toLowerCase())) {
                 lista.push(nombre);
                 localStorage.setItem('minna_responsables_lista', JSON.stringify(lista));
                 cargarResponsablesGuardados();
             }
             localStorage.setItem('minna_ultimo_responsable', nombre);
-        }
-
-        window.abrirModalResponsable = function() {
-            const ultimo = responsableActual || localStorage.getItem('minna_ultimo_responsable') || '';
-            document.getElementById('inputResponsableModal').value = ultimo;
-            document.getElementById('modalResponsable').style.display = 'flex';
-            setTimeout(() => {
-                const input = document.getElementById('inputResponsableModal');
-                input.focus();
-                input.select();
-            }, 100);
-        };
-
-        window.confirmarResponsable = function() {
-            const nombre = document.getElementById('inputResponsableModal').value.trim();
-            if (!nombre) {
-                alert('Por favor escribe tu nombre para continuar.');
-                return;
-            }
-            responsableActual = nombre;
-            guardarResponsableSiEsNuevo(nombre);
             document.getElementById('nombreResponsableActual').innerText = nombre;
             document.getElementById('modalResponsable').style.display = 'none';
         };
@@ -540,282 +423,214 @@
         function parseNumeroSeguro(valor) {
             if (valor === null || valor === undefined || valor === '') return 0;
             if (typeof valor === 'number') return valor;
-            const limpio = String(valor).replace(/[^0-9.\-]/g, '');
-            const num = parseFloat(limpio);
+            const num = parseFloat(String(valor).replace(/[^0-9.\-]/g, ''));
             return isNaN(num) ? 0 : num;
         }
 
         window.cargarMaestroExcel = function(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                
-                const rowsObj = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
-                maestroSkuDb = {};
-                stockSistemaDb = {};
-
-                rowsObj.forEach(row => {
-                    const keys = Object.keys(row);
+                const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+                const rows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {range: 5});
+                maestroSkuDb = {}; stockSistemaDb = {};
+                rows.forEach(row => {
                     let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "", stock = 0, costoUnitario = 0;
-
-                    keys.forEach(k => {
+                    Object.keys(row).forEach(k => {
                         const kLower = k.toLowerCase().trim();
-                        if (kLower.includes("código de barras") || kLower.includes("codigo de barras") || kLower.includes("barcode")) barcode = String(row[k] || '');
+                        if (kLower.includes("código de barras") || kLower.includes("barcode")) barcode = String(row[k] || '');
                         if (kLower === "sku") sku = String(row[k] || '');
                         if (kLower === "producto") producto = String(row[k] || '');
                         if (kLower === "variante") variante = String(row[k] || '');
                         if (kLower.includes("tipo")) tipo = String(row[k] || '');
                         if (kLower === "marca") marca = String(row[k] || '');
                         if (kLower === "stock") stock = parseNumeroSeguro(row[k]);
-                        
-                        if (kLower.includes("unitario") || (kLower.includes("costo") && kLower.includes("prom") && !kLower.includes("total"))) {
-                            costoUnitario = parseNumeroSeguro(row[k]);
-                        }
+                        if (kLower.includes("costo neto prom")) costoUnitario = parseNumeroSeguro(row[k]);
                     });
-
-                    keys.forEach(k => {
-                        if (k.includes('__EMPTY_6') || k === 'G' || k.toLowerCase().includes('costo neto prom. unitario')) {
-                            const valG = parseNumeroSeguro(row[k]);
-                            if (valG > 0) costoUnitario = valG;
-                        }
-                    });
-
-                    barcode = barcode.trim();
-                    sku = sku.trim();
-                    producto = producto.trim();
-                    variante = variante.trim();
-                    tipo = tipo.trim();
-                    marca = marca.trim();
-
-                    if (barcode || sku) {
-                        const key = barcode ? barcode : sku;
-                        maestroSkuDb[key] = {
-                            barcode: barcode,
-                            sku: sku,
-                            producto: producto,
-                            variante: variante,
-                            tipo: tipo,
-                            marca: marca
-                        };
-                    }
-
-                    if (sku) {
-                        stockSistemaDb[sku] = {
-                            producto: producto,
-                            variante: variante,
-                            tipo: tipo,
-                            stock: stock,
-                            costoUnitario: costoUnitario
-                        };
-                    }
+                    if (barcode || sku) maestroSkuDb[barcode || sku] = { barcode: barcode.trim(), sku: sku.trim(), producto: producto.trim(), variante: variante.trim(), tipo: tipo.trim(), marca: marca.trim() };
+                    if (sku) stockSistemaDb[sku.trim()] = { producto: producto.trim(), variante: variante.trim(), tipo: tipo.trim(), stock, costoUnitario };
                 });
-
                 localStorage.setItem('minna_maestro_db', JSON.stringify(maestroSkuDb));
                 localStorage.setItem('minna_stock_sistema_db', JSON.stringify(stockSistemaDb));
-                const totalProds = Object.keys(maestroSkuDb).length;
-                const status = document.getElementById('statusMaestro');
-                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos)`;
-                status.style.color = '#2e7d32';
+                document.getElementById('statusMaestro').innerText = `¡Cargado con éxito! (${Object.keys(maestroSkuDb).length} productos)`;
+                document.getElementById('statusMaestro').style.color = '#2e7d32';
             };
             reader.readAsArrayBuffer(file);
         };
 
+        // ---- CARGAR EXCEL DE PICKING Y GESTIÓN RF ----
         window.cargarExcelPicking = function(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet);
-
+                const workbook = XLSX.utils.book_new(); // se usa sheet_to_json
+                const wb = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+                const rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]);
+                
                 tareasPickingArray = [];
                 rows.forEach(row => {
-                    let sucursal = "", codigo = "", cantidadAsignada = 0, producto = "", variante = "";
-                    const keys = Object.keys(row);
-
-                    keys.forEach(k => {
-                        const kL = k.toLowerCase().trim();
-                        if (kL.includes("sucursal")) sucursal = String(row[k] || '').trim();
-                        if (kL.includes("código de barras") || kL.includes("codigo de barras") || kL.includes("barcode") || kL.includes("sku")) codigo = String(row[k] || '').trim();
-                        if (kL.includes("reestock") || kL.includes("cantidad") || kL.includes("cant")) cantidadAsignada = parseNumeroSeguro(row[k]);
-                        if (kL.includes("producto")) producto = String(row[k] || '').trim();
-                        if (kL.includes("variante")) variante = String(row[k] || '').trim();
+                    let tipoProd = "", producto = "", variante = "", barcode = "", sucursal = "", reestock = 0;
+                    Object.keys(row).forEach(k => {
+                        const kl = k.toLowerCase().trim();
+                        if (kl.includes("tipo de producto")) tipoProd = String(row[k] || '');
+                        if (kl === "producto") producto = String(row[k] || '');
+                        if (kl === "variante") variante = String(row[k] || '');
+                        if (kl.includes("código de barras") || kl.includes("barcode") || kl === "sku") barcode = String(row[k] || '');
+                        if (kl.includes("sucursal")) sucursal = String(row[k] || '');
+                        if (kl.includes("reestock") || kl.includes("cantidad")) reestock = parseNumeroSeguro(row[k]);
                     });
-
-                    if (codigo && cantidadAsignada > 0) {
-                        tareasPickingArray.push({
-                            sucursal: sucursal || 'GENERAL',
-                            codigo: codigo,
-                            cantidadAsignada: cantidadAsignada,
-                            producto: producto,
-                            variante: variante
-                        });
+                    if (reestock > 0 && barcode) {
+                        tareasPickingArray.push({ tipoProd, producto, variante, barcode, sucursal, reestock });
                     }
                 });
 
                 if (tareasPickingArray.length > 0) {
                     indiceTareaActual = 0;
-                    document.getElementById('contenedorRfConsole').style.display = 'block';
-                    mostrarTareaRfActual();
-                    alert(`✅ Archivo de picking cargado con éxito. ${tareasPickingArray.length} tareas de picking listas.`);
+                    document.getElementById('rfTaskContainer').style.display = 'block';
+                    mostrarTareaActual();
                 } else {
-                    alert('⚠️ No se encontraron filas válidas con código y cantidad en el Excel de picking.');
+                    alert('No se encontraron filas con Reestock > 0 o formato incompatible.');
                 }
             };
             reader.readAsArrayBuffer(file);
         };
 
-        function mostrarTareaRfActual() {
-            if (indiceTareaActual >= tareasPickingArray.length) {
-                document.getElementById('contenedorRfConsole').style.display = 'none';
-                alert('🎉 ¡Felicitaciones! Se han completado todas las tareas de picking de este archivo.');
-                return;
-            }
-
-            const tarea = tareasPickingArray[indiceTareaActual];
-            document.getElementById('rfTaskTitle').innerText = `Tarea ${indiceTareaActual + 1} de ${tareasPickingArray.length}`;
-            document.getElementById('rfSucursal').innerText = tarea.sucursal;
-            document.getElementById('rfCodigo').innerText = tarea.codigo;
-            
-            let infoProd = maestroSkuDb[tarea.codigo] || Object.values(maestroSkuDb).find(p => p.sku === tarea.codigo || p.barcode === tarea.codigo);
-            let nombreProd = tarea.producto || (infoProd ? infoProd.producto : 'Producto General');
-            let varProd = tarea.variante || (infoProd ? infoProd.variante : '');
-            let skuReal = infoProd ? infoProd.sku : tarea.codigo;
-
-            document.getElementById('rfProducto').innerText = `${nombreProd} ${varProd ? '('+varProd+')' : ''}`;
-            document.getElementById('rfCantidadAsignada').innerText = tarea.cantidadAsignada;
-            document.getElementById('rfCantidadInput').value = tarea.cantidadAsignada;
-            document.getElementById('rfInputEscaneo').value = ''; // Limpiar el escaneo anterior
-
-            const stockUbi = calcularStockPorUbicacion(skuReal);
-            let ubiTexto = [];
-            for (const [ubi, cant] of Object.entries(stockUbi)) {
-                if (cant > 0) ubiTexto.push(`${ubi} (${cant} disp.)`);
-            }
-            document.getElementById('rfUbicacion').innerText = ubiTexto.length > 0 ? ubiTexto.join(', ') : '⚠️ Sin stock registrado en app';
+        function calcularStockPorUbicacion(skuBuscado) {
+            const stockPorUbicacion = {};
+            historialArray.forEach(m => {
+                if ((m.SKU || '').toLowerCase() !== (skuBuscado || '').toLowerCase()) return;
+                const cant = parseInt(m.Cantidad) || 0;
+                const ubi = m.Ubicacion || 'Sin ubicación';
+                const ubiT = m.Ubicacion_Traslado;
+                if (m.Operacion === 'Recepción') stockPorUbicacion[ubi] = (stockPorUbicacion[ubi] || 0) + cant;
+                else if (m.Operacion === 'Despacho' || m.Operacion === 'Merma') stockPorUbicacion[ubi] = (stockPorUbicacion[ubi] || 0) - cant;
+                else if (m.Operacion === 'Traslado') {
+                    stockPorUbicacion[ubi] = (stockPorUbicacion[ubi] || 0) - cant;
+                    if (ubiT && ubiT !== 'Merma666') stockPorUbicacion[ubiT] = (stockPorUbicacion[ubiT] || 0) + cant;
+                }
+            });
+            return stockPorUbicacion;
         }
 
-        window.confirmarTareaRf = async function() {
-            const tarea = tareasPickingArray[indiceTareaActual];
-            const codigoEscaneado = document.getElementById('rfInputEscaneo').value.trim();
-            const cantReal = parseInt(document.getElementById('rfCantidadInput').value);
+        function obtenerUbicacionMasCercana(sku) {
+            const stockUbi = calcularStockPorUbicacion(sku);
+            const disponibles = Object.entries(stockUbi)
+                .filter(([ubi, stock]) => ubi !== 'Sin ubicación' && stock > 0)
+                .sort(([a], [b]) => a.localeCompare(b)); // Orden alfanumérico para tomar la más cercana/primera
 
-            let infoProd = maestroSkuDb[tarea.codigo] || Object.values(maestroSkuDb).find(p => p.sku === tarea.codigo || p.barcode === tarea.codigo);
-            let skuReal = infoProd ? infoProd.sku : tarea.codigo;
-            let barcodeReal = infoProd ? infoProd.barcode : tarea.codigo;
+            if (disponibles.length > 0) {
+                // Verificamos si cae en ubicación de merma
+                return { ubicacion: disponibles[0][0], stock: disponibles[0][1], esMerma: disponibles[0][0].toUpperCase().includes('MERMA') };
+            }
+            return { ubicacion: 'No encontrado', stock: 0, esMerma: false };
+        }
 
-            if (!codigoEscaneado) {
-                alert('⚠️ Debes escanear o ingresar el código de barras/SKU para corroborar el producto.');
-                document.getElementById('rfInputEscaneo').focus();
+        function mostrarTareaActual() {
+            if (indiceTareaActual >= tareasPickingArray.length) {
+                alert('🎉 ¡Todas las tareas de picking han sido completadas!');
+                document.getElementById('rfTaskContainer').style.display = 'none';
                 return;
             }
 
-            if (codigoEscaneado.toLowerCase() !== String(skuReal).toLowerCase() && 
-                codigoEscaneado.toLowerCase() !== String(barcodeReal).toLowerCase()) {
-                alert(`❌ ¡Error de Picking! El código escaneado (${codigoEscaneado}) no corresponde al producto de esta tarea (${skuReal} / ${barcodeReal}).`);
-                document.getElementById('rfInputEscaneo').focus();
-                document.getElementById('rfInputEscaneo').select();
+            const t = tareasPickingArray[indiceTareaActual];
+            document.getElementById('rfTaskCounter').innerText = `Tarea ${indiceTareaActual + 1} de ${tareasPickingArray.length}`;
+            document.getElementById('rfSucursal').innerText = t.sucursal || 'General';
+            document.getElementById('rfSku').innerText = t.barcode;
+            document.getElementById('rfProducto').innerText = `${t.producto} ${t.variante ? '('+t.variante+')' : ''}`;
+            document.getElementById('rfInputScan').value = '';
+            document.getElementById('rfInputCant').value = t.reestock;
+
+            // Obtener ubicación más cercana
+            const infoUbi = obtenerUbicacionMasCercana(t.barcode);
+            document.getElementById('rfUbicacion').innerText = `${infoUbi.ubicacion} (${infoUbi.stock} disp.)`;
+            document.getElementById('rfUbicacion').dataset.ubicacionReal = infoUbi.ubicacion;
+
+            const btnMerma = document.getElementById('btnMermaSaltar');
+            if (infoUbi.esMerma || infoUbi.ubicacion.toUpperCase().includes('MERMA')) {
+                btnMerma.style.display = 'inline-block';
+            } else {
+                btnMerma.style.display = 'none';
+            }
+        }
+
+        window.saltarTareaMerma = function() {
+            alert('⚠️ Ubicación en Merma detectada. Saltando tarea sin registrar despacho.');
+            indiceTareaActual++;
+            mostrarTareaActual();
+        };
+
+        window.confirmarTareaPicking = async function() {
+            const t = tareasPickingArray[indiceTareaActual];
+            const scanVal = document.getElementById('rfInputScan').value.trim();
+            const cantVal = parseInt(document.getElementById('rfInputCant').value) || 0;
+            const ubicacionSeleccionada = document.getElementById('rfUbicacion').dataset.ubicacionReal || 'Sin ubicación';
+
+            if (scanVal && scanVal !== t.barcode && !t.barcode.includes(scanVal)) {
+                if (!confirm('El código escaneado no coincide exactamente con el barcode de la tarea. ¿Desea continuar de todas formas?')) return;
+            }
+
+            if (cantVal <= 0) {
+                alert('La cantidad debe ser mayor a 0.');
                 return;
             }
 
-            if (isNaN(cantReal) || cantReal < 0) {
-                alert('Por favor ingresa una cantidad válida.');
-                return;
-            }
-
-            if (!responsableActual) {
-                alert('Indica tu nombre de responsable primero.');
-                abrirModalResponsable();
-                return;
-            }
-
-            let prodNombre = infoProd ? infoProd.producto : (tarea.producto || 'Producto');
-            let prodVar = infoProd ? infoProd.variante : (tarea.variante || '');
-            let prodTipo = infoProd ? infoProd.tipo : '';
-            let prodMarca = infoProd ? infoProd.marca : '';
-
-            const stockUbi = calcularStockPorUbicacion(skuReal);
-            let ubiElegida = 'Sin ubicación';
-            for (const [ubi, cant] of Object.entries(stockUbi)) {
-                if (cant > 0) {
-                    ubiElegida = ubi;
-                    break;
-                }
-            }
-
+            // Registrar automáticamente como Despacho
             const movimiento = {
                 Fecha: new Date().toLocaleString(),
                 Timestamp: Date.now(),
                 Operacion: 'Despacho',
-                Barcode: barcodeReal || tarea.codigo,
-                SKU: skuReal,
-                Producto: prodNombre,
-                Variante: prodVar,
-                Tipo: prodTipo,
-                Marca: prodMarca,
-                Ubicacion: ubiElegida,
+                Barcode: t.barcode,
+                SKU: t.barcode,
+                Producto: t.producto,
+                Variante: t.variante || '-',
+                Tipo: t.tipoProd || '-',
+                Marca: '-',
+                Ubicacion: ubicacionSeleccionada,
                 Ubicacion_Traslado: '',
-                Sucursal: tarea.sucursal,
+                Sucursal: t.sucursal || 'GENERAL',
                 Causa: '',
-                Cantidad: cantReal,
-                Responsable: responsableActual
+                Cantidad: cantVal,
+                Responsable: responsableActual || 'Sistema RF'
             };
 
             try {
-                await window.ejecutarGuardadoNube(movimiento);
+                // Si tienes firebase conectado, se guardará en la nube automáticamente a través del listener, 
+                // o podemos agregarlo directamente a la colección mediante la app principal.
+                if (typeof window.registrarMovimientoCloud === 'function') {
+                    await window.registrarMovimientoCloud(movimiento);
+                } else {
+                    // Fallback local si fuera necesario
+                    historialArray.push({ id: 'local_' + Date.now(), ...movimiento });
+                    renderizarHistorialGlobal(historialArray);
+                }
+
                 indiceTareaActual++;
-                mostrarTareaRfActual();
-            } catch (error) {
-                alert('Error al registrar tarea RF: ' + error.message);
+                mostrarTareaActual();
+            } catch (err) {
+                alert('Error al registrar picking: ' + err.message);
             }
         };
 
         window.filtrarSugerencias = function(texto) {
             const box = document.getElementById('sugerenciasBox');
             box.innerHTML = '';
-            
-            const queryVal = texto.trim().toLowerCase();
-            if (!queryVal) {
-                box.style.display = 'none';
-                return;
-            }
-
-            if (maestroSkuDb[queryVal]) {
-                seleccionarProducto(maestroSkuDb[queryVal]);
-                box.style.display = 'none';
-                return;
-            }
-
+            const q = texto.trim().toLowerCase();
+            if (!q) { box.style.display = 'none'; return; }
+            if (maestroSkuDb[q]) { seleccionarProducto(maestroSkuDb[q]); box.style.display = 'none'; return; }
             let matches = 0;
             for (const key in maestroSkuDb) {
                 const item = maestroSkuDb[key];
-                const matchBarcode = item.barcode.toLowerCase().includes(queryVal);
-                const matchSku = item.sku.toLowerCase().includes(queryVal);
-                const matchProd = item.producto.toLowerCase().includes(queryVal);
-
-                if (matchBarcode || matchSku || matchProd) {
-                    matches++;
-                    if (matches > 10) break;
-
+                if (item.barcode.toLowerCase().includes(q) || item.sku.toLowerCase().includes(q) || item.producto.toLowerCase().includes(q)) {
+                    matches++; if (matches > 10) break;
                     const div = document.createElement('div');
                     div.className = 'suggestion-item';
-                    div.innerHTML = `<span><strong>${item.sku}</strong> - ${item.producto} (${item.variante || 'S/V'})</span> <small style="color:#78909c;">${item.barcode}</small>`;
-                    div.onclick = function() {
-                        seleccionarProducto(item);
-                        box.style.display = 'none';
-                    };
+                    div.innerHTML = `<span><strong>${item.sku}</strong> - ${item.producto}</span>`;
+                    div.onclick = () => { seleccionarProducto(item); box.style.display = 'none'; };
                     box.appendChild(div);
                 }
             }
-
             box.style.display = matches > 0 ? 'block' : 'none';
         };
 
@@ -829,62 +644,18 @@
             actualizarUbicacionesDespacho(item.sku);
         }
 
-        function calcularStockPorUbicacion(skuBuscado) {
-            const stockPorUbicacion = {};
-            historialArray.forEach(m => {
-                if ((m.SKU || '').toLowerCase() !== (skuBuscado || '').toLowerCase()) return;
-
-                const cant = parseInt(m.Cantidad) || 0;
-                const ubicacionOrigen = m.Ubicacion || 'Sin ubicación';
-                const ubicacionDestino = m.Ubicacion_Traslado;
-
-                if (m.Operacion === 'Recepción') {
-                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) + cant;
-                } else if (m.Operacion === 'Despacho' || m.Operacion === 'Merma') {
-                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
-                } else if (m.Operacion === 'Traslado') {
-                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
-                    if (ubicacionDestino && ubicacionDestino !== 'Merma666') {
-                        stockPorUbicacion[ubicacionDestino] = (stockPorUbicacion[ubicacionDestino] || 0) + cant;
-                    }
-                }
-            });
-            return stockPorUbicacion;
-        }
-
-        function actualizarUbicacionesDespacho(sku) {
+        window.actualizarUbicacionesDespacho = function(sku) {
             const selector = document.getElementById('ubicacionDespacho');
             if (!selector) return;
-
-            const stockPorUbicacion = calcularStockPorUbicacion(sku);
-            selector.innerHTML = '<option value="">Selecciona una ubicación...</option>';
-            Object.entries(stockPorUbicacion)
-                .filter(([ubicacion, stock]) => ubicacion !== 'Sin ubicación' && stock > 0)
-                .sort(([ubicacionA], [ubicacionB]) => ubicacionA.localeCompare(ubicacionB))
-                .forEach(([ubicacion, stock]) => {
-                    selector.insertAdjacentHTML('beforeend', `<option value="${ubicacion}">${ubicacion} (${stock} disponibles)</option>`);
+            const stockUbi = calcularStockPorUbicacion(sku);
+            selector.innerHTML = '<option value="">Selecciona ubicación más cercana...</option>';
+            Object.entries(stockUbi)
+                .filter(([ubi, stock]) => ubi !== 'Sin ubicación' && stock > 0)
+                .sort(([a], [b]) => a.localeCompare(b))
+                .forEach(([ubi, stock]) => {
+                    selector.insertAdjacentHTML('beforeend', `<option value="${ubi}">${ubi} (${stock} disp.)</option>`);
                 });
             selector.insertAdjacentHTML('beforeend', '<option value="No encontrado">No encontrado</option>');
-            selector.value = '';
-            resetearCampoCantidad();
-        }
-
-        function resetearCampoCantidad() {
-            const inputCantidad = document.getElementById('cantidad');
-            inputCantidad.readOnly = false;
-            inputCantidad.min = 1;
-        }
-
-        window.manejarCambioUbicacionDespacho = function(selectEl) {
-            const inputCantidad = document.getElementById('cantidad');
-            if (selectEl.value === 'No encontrado') {
-                inputCantidad.value = 0;
-                inputCantidad.min = 0;
-                inputCantidad.readOnly = true;
-            } else {
-                resetearCampoCantidad();
-                if (inputCantidad.value === '0') inputCantidad.value = '';
-            }
         };
 
         window.setTipoOperacion = function(tipo, element) {
@@ -892,641 +663,109 @@
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             element.classList.add('active');
 
-            const grupoTraslado = document.getElementById('grupoUbicacionTraslado');
-            const inputTraslado = document.getElementById('ubicacionTraslado');
-            const contenedorUbicacionTexto = document.getElementById('contenedorUbicacionTexto');
-            const inputUbicacion = document.getElementById('ubicacion');
-            const selectorUbicacion = document.getElementById('ubicacionDespacho');
-            const grupoSucursal = document.getElementById('grupoSucursal');
-            const inputSucursal = document.getElementById('sucursalDespacho');
-            const grupoCausa = document.getElementById('grupoCausa');
-            const selectCausa = document.getElementById('causaMerma');
+            const gTraslado = document.getElementById('grupoUbicacionTraslado');
+            const contUbi = document.getElementById('contenedorUbicacionTexto');
+            const selUbi = document.getElementById('ubicacionDespacho');
+            const gSucursal = document.getElementById('grupoSucursal');
+            const gCausa = document.getElementById('grupoCausa');
 
             if (tipo === 'Despacho') {
-                contenedorUbicacionTexto.style.display = 'none';
-                inputUbicacion.required = false;
-                selectorUbicacion.style.display = 'block';
-                selectorUbicacion.required = true;
+                contUbi.style.display = 'none'; selUbi.style.display = 'block'; gSucursal.style.display = 'block'; gTraslado.style.display = 'none'; gCausa.style.display = 'none';
                 actualizarUbicacionesDespacho(document.getElementById('skuFinal').value);
-                grupoSucursal.style.display = 'block';
-                inputSucursal.required = true;
-                grupoTraslado.style.display = 'none';
-                inputTraslado.required = false;
-                grupoCausa.style.display = 'none';
-                selectCausa.required = false;
             } else if (tipo === 'Traslado') {
-                contenedorUbicacionTexto.style.display = 'flex';
-                inputUbicacion.required = true;
-                selectorUbicacion.style.display = 'none';
-                selectorUbicacion.required = false;
-                grupoSucursal.style.display = 'none';
-                inputSucursal.required = false;
-                grupoTraslado.style.display = 'block';
-                inputTraslado.readOnly = false;
-                inputTraslado.value = '';
-                inputTraslado.placeholder = 'Ej. B-03';
-                grupoCausa.style.display = 'none';
-                selectCausa.required = false;
-                resetearCampoCantidad();
+                contUbi.style.display = 'flex'; selUbi.style.display = 'none'; gSucursal.style.display = 'none'; gTraslado.style.display = 'block'; gCausa.style.display = 'none';
             } else if (tipo === 'Merma') {
-                contenedorUbicacionTexto.style.display = 'flex';
-                inputUbicacion.required = true;
-                selectorUbicacion.style.display = 'none';
-                selectorUbicacion.required = false;
-                grupoSucursal.style.display = 'none';
-                inputSucursal.required = false;
-                grupoTraslado.style.display = 'block';
-                inputTraslado.readOnly = true;
-                inputTraslado.value = 'Merma666';
-                grupoCausa.style.display = 'block';
-                selectCausa.required = true;
-                resetearCampoCantidad();
+                contUbi.style.display = 'flex'; selUbi.style.display = 'none'; gSucursal.style.display = 'none'; gTraslado.style.display = 'block'; gCausa.style.display = 'block';
+                document.getElementById('ubicacionTraslado').value = 'Mermer666';
             } else {
-                contenedorUbicacionTexto.style.display = 'flex';
-                inputUbicacion.required = true;
-                selectorUbicacion.style.display = 'none';
-                selectorUbicacion.required = false;
-                grupoSucursal.style.display = 'none';
-                inputSucursal.required = false;
-                grupoTraslado.style.display = 'none';
-                inputTraslado.required = false;
-                grupoCausa.style.display = 'none';
-                selectCausa.required = false;
-                resetearCampoCantidad();
+                contUbi.style.display = 'flex'; selUbi.style.display = 'none'; gSucursal.style.display = 'none'; gTraslado.style.display = 'none'; gCausa.style.display = 'none';
             }
         };
 
-        window.consultarUbicaciones = function(valorBusqueda) {
+        window.consultarUbicaciones = function(query) {
             const boxRes = document.getElementById('resultadoUbicacionesBox');
-            const query = valorBusqueda.trim().toLowerCase();
-            if (!query) {
-                boxRes.style.display = 'none';
-                boxRes.innerHTML = '';
-                return;
+            const q = query.trim().toLowerCase();
+            if (!q) { boxRes.style.display = 'none'; return; }
+            let skuBuscado = maestroSkuDb[q] ? maestroSkuDb[q].sku.toLowerCase() : q;
+            let stockUbi = calcularStockPorUbicacion(skuBuscado);
+            let html = `<strong>Ubicaciones y Stock:</strong><ul>`;
+            let hay = false;
+            for (const [ubi, stock] of Object.entries(stockUbi)) {
+                if (stock !== 0) { hay = true; html += `<li>${ubi}: <strong>${stock} un.</strong></li>`; }
             }
-
-            let skuBuscado = query;
-            if (maestroSkuDb[query]) {
-                skuBuscado = maestroSkuDb[query].sku.toLowerCase();
-            }
-
-            let stockPorUbicacion = {};
-            let nombreProdEncontrado = "";
-
-            historialArray.forEach(m => {
-                const mSku = (m.SKU || "").toLowerCase();
-                const mBarcode = (m.Barcode || "").toLowerCase();
-                const mProd = (m.Producto || "").toLowerCase();
-
-                if (mSku === skuBuscado || mBarcode === query || mProd.includes(query)) {
-                    if (m.Producto && !nombreProdEncontrado) nombreProdEncontrado = m.Producto;
-
-                    const cant = parseInt(m.Cantidad) || 0;
-                    const op = m.Operacion;
-                    const ubi = m.Ubicacion;
-                    const ubiTraslado = m.Ubicacion_Traslado;
-
-                    if (ubi) {
-                        if (!stockPorUbicacion[ubi]) stockPorUbicacion[ubi] = 0;
-                        if (op === 'Recepción') stockPorUbicacion[ubi] += cant;
-                        if (op === 'Despacho' || op === 'Merma') stockPorUbicacion[ubi] -= cant;
-                        if (op === 'Traslado') stockPorUbicacion[ubi] -= cant;
-                    }
-
-                    if (ubiTraslado && ubiTraslado !== 'Merma666') {
-                        if (!stockPorUbicacion[ubiTraslado]) stockPorUbicacion[ubiTraslado] = 0;
-                        if (op === 'Traslado') stockPorUbicacion[ubiTraslado] += cant;
-                    }
-                }
-            });
-
-            let htmlResultado = `<strong>Producto:</strong> ${nombreProdEncontrado || query.toUpperCase()}<br><br><strong>Ubicaciones y Stock Actual:</strong><ul>`;
-            let hayAlMenosUna = false;
-
-            for (const [ubi, stock] of Object.entries(stockPorUbicacion)) {
-                if (stock !== 0) {
-                    hayAlMenosUna = true;
-                    htmlResultado += `<li>Ubicación <strong>${ubi}</strong>: <strong>${stock} unidades</strong></li>`;
-                }
-            }
-
-            if (!hayAlMenosUna) {
-                htmlResultado += `<li><em>No hay stock disponible registrado en ninguna ubicación para este producto.</em></li>`;
-            }
-            htmlResultado += `</ul>`;
-
+            if (!hay) html += `<li><em>Sin stock registrado.</em></li>`;
+            html += `</ul>`;
             boxRes.style.display = 'block';
-            boxRes.innerHTML = htmlResultado;
+            boxRes.innerHTML = html;
         };
 
         window.iniciarEscanner = function(destino) {
             destinoEscaneo = destino;
             document.getElementById('modalScanner').style.display = 'flex';
-
-            if (!html5QrCode) {
-                html5QrCode = new Html5Qrcode("reader");
-            }
-
-            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
-            html5QrCode.start(
-                { facingMode: "environment" }, 
-                config, 
-                onScanSuccess, 
-                () => {}
-            ).catch(err => {
-                alert("No se pudo acceder a la cámara.");
+            if (!html5QrCode) html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: { width: 250, height: 150 } }, (text) => {
                 window.cerrarEscanner();
-            });
+                if (destino === 'producto') { document.getElementById('inputBusqueda').value = text; filtrarSugerencias(text); }
+                else if (destino === 'ubicacion') { document.getElementById('ubicacion').value = text; }
+                else if (destino === 'rf_scan') { document.getElementById('rfInputScan').value = text; }
+            }, () => {}).catch(() => { alert("Error de cámara"); window.cerrarEscanner(); });
         };
-
-        function onScanSuccess(decodedText) {
-            window.cerrarEscanner();
-            if (destinoEscaneo === 'producto') {
-                document.getElementById('inputBusqueda').value = decodedText;
-                window.filtrarSugerencias(decodedText);
-            } else if (destinoEscaneo === 'ubicacion') {
-                document.getElementById('ubicacion').value = decodedText;
-            } else if (destinoEscaneo === 'consulta_ubicacion') {
-                document.getElementById('inputConsultaUbicacion').value = decodedText;
-                window.consultarUbicaciones(decodedText);
-            } else if (destinoEscaneo === 'rf_picking') {
-                document.getElementById('rfInputEscaneo').value = decodedText;
-            }
-        }
 
         window.cerrarEscanner = function() {
             if (html5QrCode && html5QrCode.isScanning) {
-                html5QrCode.stop().then(() => {
-                    document.getElementById('modalScanner').style.display = 'none';
-                }).catch(() => {
-                    document.getElementById('modalScanner').style.display = 'none';
-                });
-            } else {
-                document.getElementById('modalScanner').style.display = 'none';
-            }
-        };
-
-        const MINNA_COLOR_HEADER = "5E35B1";
-        const MINNA_COLOR_HEADER_ALT = "AB47BC";
-        const MINNA_COLOR_ZEBRA = "F3E5F5";
-        const MINNA_COLOR_BORDE = "D1C4E9";
-        const MINNA_COLOR_TOTAL = "EDE7F6";
-
-        function bordeFino() {
-            const b = { style: "thin", color: { rgb: MINNA_COLOR_BORDE } };
-            return { top: b, bottom: b, left: b, right: b };
-        }
-
-        function estilizarHoja(ws, opciones) {
-            opciones = opciones || {};
-            if (!ws || !ws['!ref']) return ws;
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            const colorHeader = opciones.colorHeader || MINNA_COLOR_HEADER;
-
-            for (let r = range.s.r; r <= range.e.r; r++) {
-                let filaEsTotal = false;
-                if (opciones.marcarTotal) {
-                    const primeraCeldaAddr = XLSX.utils.encode_cell({ r, c: range.s.c });
-                    const primeraCelda = ws[primeraCeldaAddr];
-                    if (primeraCelda && String(primeraCelda.v).toUpperCase().includes('TOTAL')) filaEsTotal = true;
-                }
-
-                for (let c = range.s.c; c <= range.e.c; c++) {
-                    const addr = XLSX.utils.encode_cell({ r, c });
-                    if (!ws[addr]) continue;
-
-                    if (r === range.s.r) {
-                        ws[addr].s = {
-                            font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
-                            fill: { fgColor: { rgb: colorHeader } },
-                            alignment: { horizontal: "center", vertical: "center", wrapText: true },
-                            border: bordeFino()
-                        };
-                    } else if (filaEsTotal) {
-                        ws[addr].s = {
-                            font: { bold: true, color: { rgb: "4A148C" } },
-                            fill: { fgColor: { rgb: MINNA_COLOR_TOTAL } },
-                            border: bordeFino(),
-                            alignment: { vertical: "center" }
-                        };
-                    } else {
-                        const esParImpar = (r - range.s.r) % 2 === 0;
-                        ws[addr].s = {
-                            fill: esParImpar ? { fgColor: { rgb: MINNA_COLOR_ZEBRA } } : { fgColor: { rgb: "FFFFFF" } },
-                            border: bordeFino(),
-                            alignment: { vertical: "center" }
-                        };
-                    }
-                }
-            }
-
-            const cols = [];
-            for (let c = range.s.c; c <= range.e.c; c++) {
-                let maxLen = 8;
-                for (let r = range.s.r; r <= range.e.r; r++) {
-                    const addr = XLSX.utils.encode_cell({ r, c });
-                    const cell = ws[addr];
-                    if (cell && cell.v !== undefined && cell.v !== null) {
-                        const len = String(cell.v).length;
-                        if (len > maxLen) maxLen = len;
-                    }
-                }
-                cols.push({ wch: Math.min(maxLen + 2, 42) });
-            }
-            ws['!cols'] = cols;
-            return ws;
-        }
-
-        window.exportarExcel = function() {
-            if (historialArray.length === 0) {
-                alert('No hay movimientos registrados para exportar.');
-                return;
-            }
-            const dataToExport = historialArray.map(({id, Timestamp, ...rest}) => rest);
-            const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-            estilizarHoja(worksheet);
-            const workbook = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos_Kardex");
-            XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
-        };
-
-        window.exportarInventarioERI = function() {
-            const totalSkuSistema = Object.keys(stockSistemaDb).length;
-            if (totalSkuSistema === 0) {
-                alert('Primero carga el Excel de "Stock Actual del Sistema" (tarjeta 1) para poder calcular el ERI.');
-                return;
-            }
-
-            const fisicoPorSku = {};
-            historialArray.forEach(m => {
-                const sku = (m.SKU || '').trim();
-                if (!sku) return;
-                const cant = parseNumeroSeguro(m.Cantidad);
-                if (!fisicoPorSku[sku]) fisicoPorSku[sku] = 0;
-                if (m.Operacion === 'Recepción') fisicoPorSku[sku] += cant;
-                else if (m.Operacion === 'Despacho') fisicoPorSku[sku] -= cant;
-                else if (m.Operacion === 'Merma') fisicoPorSku[sku] -= cant;
-            });
-
-            const todosLosSku = new Set([...Object.keys(stockSistemaDb), ...Object.keys(fisicoPorSku)]);
-
-            const faltantes = [];
-            const sobrantes = [];
-            let valorTotalSistema = 0;
-
-            todosLosSku.forEach(sku => {
-                const infoSistema = stockSistemaDb[sku];
-                const stockSistema = infoSistema ? infoSistema.stock : 0;
-                const costoUnitario = infoSistema ? infoSistema.costoUnitario : 0;
-                const stockFisico = fisicoPorSku[sku] || 0;
-                const diferencia = stockFisico - stockSistema;
-
-                valorTotalSistema += stockSistema * costoUnitario;
-
-                let producto = infoSistema ? infoSistema.producto : '';
-                let variante = infoSistema ? infoSistema.variante : '';
-                let tipo = infoSistema ? infoSistema.tipo : '';
-                if (!producto) {
-                    const enMaestro = Object.values(maestroSkuDb).find(p => p.sku === sku);
-                    if (enMaestro) {
-                        producto = enMaestro.producto;
-                        variante = enMaestro.variante;
-                        tipo = enMaestro.tipo;
-                    }
-                }
-
-                if (diferencia < 0) {
-                    const cantidadFaltante = -diferencia;
-                    faltantes.push({
-                        SKU: sku,
-                        Producto: producto,
-                        Variante: variante,
-                        Tipo: tipo,
-                        'Stock Sistema': stockSistema,
-                        'Stock Físico (App)': stockFisico,
-                        'Cantidad Faltante': cantidadFaltante,
-                        'Costo Unitario': costoUnitario,
-                        'Valor Faltante': +(cantidadFaltante * costoUnitario).toFixed(2)
-                    });
-                } else if (diferencia > 0) {
-                    const cantidadSobrante = diferencia;
-                    sobrantes.push({
-                        SKU: sku,
-                        Producto: producto,
-                        Variante: variante,
-                        Tipo: tipo,
-                        'Stock Sistema': stockSistema,
-                        'Stock Físico (App)': stockFisico,
-                        'Cantidad Sobrante': cantidadSobrante,
-                        'Costo Unitario': costoUnitario,
-                        'Valor Sobrante': +(cantidadSobrante * costoUnitario).toFixed(2)
-                    });
-                }
-            });
-
-            faltantes.sort((a, b) => b['Valor Faltante'] - a['Valor Faltante']);
-            sobrantes.sort((a, b) => b['Valor Sobrante'] - a['Valor Sobrante']);
-
-            const valorTotalFaltantes = faltantes.reduce((acc, f) => acc + f['Valor Faltante'], 0);
-            const valorTotalSobrantes = sobrantes.reduce((acc, s) => acc + s['Valor Sobrante'], 0);
-            const valorTotalDiferencias = valorTotalFaltantes + valorTotalSobrantes;
-            const eri = valorTotalSistema > 0 ? (1 - (valorTotalDiferencias / valorTotalSistema)) * 100 : 0;
-
-            if (faltantes.length > 0) {
-                faltantes.push({ SKU: '', Producto: '', Variante: '', Tipo: '', 'Stock Sistema': '', 'Stock Físico (App)': '', 'Cantidad Faltante': 'TOTAL', 'Costo Unitario': '', 'Valor Faltante': +valorTotalFaltantes.toFixed(2) });
-            }
-            if (sobrantes.length > 0) {
-                sobrantes.push({ SKU: '', Producto: '', Variante: '', Tipo: '', 'Stock Sistema': '', 'Stock Físico (App)': '', 'Cantidad Sobrante': 'TOTAL', 'Costo Unitario': '', 'Valor Sobrante': +valorTotalSobrantes.toFixed(2) });
-            }
-
-            const hojaKpi = [
-                { Indicador: 'Valor Total Inventario (Sistema)', Valor: +valorTotalSistema.toFixed(2) },
-                { Indicador: 'Valor Total Faltantes', Valor: +valorTotalFaltantes.toFixed(2) },
-                { Indicador: 'Valor Total Sobrantes', Valor: +valorTotalSobrantes.toFixed(2) },
-                { Indicador: 'Valor Total Diferencias', Valor: +valorTotalDiferencias.toFixed(2) },
-                { Indicador: 'ERI - Exactitud de Registro de Inventario (%)', Valor: +eri.toFixed(2) }
-            ];
-
-            const workbook = XLSX.utils.book_new();
-            const hojaFaltantes = XLSX.utils.json_to_sheet(faltantes.length > 0 ? faltantes : [{ Mensaje: 'Sin faltantes 🎉' }]);
-            const hojaSobrantes = XLSX.utils.json_to_sheet(sobrantes.length > 0 ? sobrantes : [{ Mensaje: 'Sin sobrantes 🎉' }]);
-            const hojaKpiSheet = XLSX.utils.json_to_sheet(hojaKpi);
-
-            estilizarHoja(hojaFaltantes, { colorHeader: "c62828", marcarTotal: true });
-            estilizarHoja(hojaSobrantes, { colorHeader: "2e7d32", marcarTotal: true });
-            estilizarHoja(hojaKpiSheet, { colorHeader: MINNA_COLOR_HEADER });
-
-            XLSX.utils.book_append_sheet(workbook, hojaFaltantes, "Faltantes");
-            XLSX.utils.book_append_sheet(workbook, hojaSobrantes, "Sobrantes");
-            XLSX.utils.book_append_sheet(workbook, hojaKpiSheet, "KPI ERI");
-
-            XLSX.writeFile(workbook, "Inventario_ERI_Minna_SAC.xlsx");
-        };
-
-        function esHoy(timestamp) {
-            if (!timestamp) return false;
-            const d = new Date(timestamp);
-            const hoy = new Date();
-            return d.getFullYear() === hoy.getFullYear() && d.getMonth() === hoy.getMonth() && d.getDate() === hoy.getDate();
-        }
-
-        function obtenerPickingHoyPorSucursal() {
-            const excluidas = ['DEVOLUCIÓN A PROVEEDOR', 'AJUSTE DE INVENTARIO'];
-            const grupos = {};
-            historialArray.forEach(m => {
-                if (m.Operacion !== 'Despacho') return;
-                if (!esHoy(m.Timestamp)) return;
-                const suc = (m.Sucursal || '').trim();
-                if (!suc) return;
-                if (excluidas.some(ex => ex.toLowerCase() === suc.toLowerCase())) return;
-                if (!grupos[suc]) grupos[suc] = [];
-                grupos[suc].push(m);
-            });
-            return grupos;
-        }
-
-        function nombreHojaSeguro(nombre, usados) {
-            let limpio = String(nombre).replace(/[\[\]\*\/\\\?:]/g, ' ').trim();
-            if (!limpio) limpio = 'Sucursal';
-            limpio = limpio.substring(0, 31);
-            let final = limpio;
-            let i = 2;
-            while (usados.has(final.toLowerCase())) {
-                const sufijo = ` (${i})`;
-                final = limpio.substring(0, 31 - sufijo.length) + sufijo;
-                i++;
-            }
-            usados.add(final.toLowerCase());
-            return final;
-        }
-
-        function calcularProductividadHoy(itemsTodosHoy) {
-            const porResponsable = {};
-            itemsTodosHoy.forEach(m => {
-                const resp = m.Responsable || 'Sin responsable';
-                if (!porResponsable[resp]) porResponsable[resp] = { lineas: 0, unidades: 0, timestamps: [], sucursales: new Set() };
-                porResponsable[resp].lineas += 1;
-                porResponsable[resp].unidades += parseInt(m.Cantidad) || 0;
-                if (m.Timestamp) porResponsable[resp].timestamps.push(m.Timestamp);
-                if (m.Sucursal) porResponsable[resp].sucursales.add(m.Sucursal);
-            });
-
-            const filas = Object.keys(porResponsable).sort().map(resp => {
-                const d = porResponsable[resp];
-                const inicio = d.timestamps.length ? Math.min(...d.timestamps) : null;
-                const fin = d.timestamps.length ? Math.max(...d.timestamps) : null;
-                const horasBrutas = (inicio !== null && fin !== null) ? (fin - inicio) / 3600000 : 0;
-                const horasCalc = horasBrutas > 0 ? horasBrutas : (1 / 60);
-                return {
-                    Responsable: resp,
-                    'Sucursales Atendidas': Array.from(d.sucursales).sort().join(', ') || '-',
-                    'Líneas Pickeadas': d.lineas,
-                    'Unidades Pickeadas': d.unidades,
-                    'Hora Inicio': inicio ? new Date(inicio).toLocaleTimeString('es-PE') : '-',
-                    'Hora Fin': fin ? new Date(fin).toLocaleTimeString('es-PE') : '-',
-                    'Tiempo Activo (hrs)': +horasCalc.toFixed(2),
-                    'Unidades / Hora': +(d.unidades / horasCalc).toFixed(1),
-                    'Líneas / Hora': +(d.lineas / horasCalc).toFixed(1)
-                };
-            });
-
-            const totalLineas = filas.reduce((a, f) => a + f['Líneas Pickeadas'], 0);
-            const totalUnidades = filas.reduce((a, f) => a + f['Unidades Pickeadas'], 0);
-            filas.push({
-                Responsable: 'TOTAL',
-                'Sucursales Atendidas': '',
-                'Líneas Pickeadas': totalLineas,
-                'Unidades Pickeadas': totalUnidades,
-                'Hora Inicio': '',
-                'Hora Fin': '',
-                'Tiempo Activo (hrs)': '',
-                'Unidades / Hora': '',
-                'Líneas / Hora': ''
-            });
-
-            return filas;
-        }
-
-        window.exportarPickingHoy = function() {
-            const grupos = obtenerPickingHoyPorSucursal();
-            const sucursales = Object.keys(grupos).sort();
-            if (sucursales.length === 0) {
-                alert('No hay picking (despachos) registrado hoy para ninguna sucursal.');
-                return;
-            }
-
-            const workbook = XLSX.utils.book_new();
-            const usados = new Set();
-            const itemsTodosHoy = sucursales.flatMap(suc => grupos[suc]);
-
-            const resumen = sucursales.map(suc => {
-                const items = grupos[suc];
-                const totalUnidades = items.reduce((acc, m) => acc + (parseInt(m.Cantidad) || 0), 0);
-                return { Sucursal: suc, 'Líneas de Picking': items.length, 'Total Unidades': totalUnidades };
-            });
-            const hojaResumen = XLSX.utils.json_to_sheet(resumen);
-            estilizarHoja(hojaResumen);
-            XLSX.utils.book_append_sheet(workbook, hojaResumen, nombreHojaSeguro('Resumen', usados));
-
-            const filasProductividad = calcularProductividadHoy(itemsTodosHoy);
-            const hojaProductividad = XLSX.utils.json_to_sheet(filasProductividad);
-            estilizarHoja(hojaProductividad, { colorHeader: MINNA_COLOR_HEADER_ALT, marcarTotal: true });
-            XLSX.utils.book_append_sheet(workbook, hojaProductividad, nombreHojaSeguro('Productividad', usados));
-
-            sucursales.forEach(suc => {
-                const items = grupos[suc].map(m => ({
-                    Fecha: m.Fecha,
-                    SKU: m.SKU,
-                    'Código de Barras': m.Barcode,
-                    Producto: m.Producto,
-                    Variante: m.Variante,
-                    Tipo: m.Tipo,
-                    Marca: m.Marca,
-                    'Ubicación': m.Ubicacion,
-                    Cantidad: m.Cantidad,
-                    Responsable: m.Responsable
-                }));
-                const hoja = XLSX.utils.json_to_sheet(items);
-                estilizarHoja(hoja);
-                XLSX.utils.book_append_sheet(workbook, hoja, nombreHojaSeguro(suc, usados));
-            });
-
-            const hoyStr = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
-            XLSX.writeFile(workbook, `Picking_Hoy_${hoyStr}.xlsx`);
-        };
-
-        window.exportarGuiaHoy = function() {
-            const grupos = obtenerPickingHoyPorSucursal();
-            const sucursales = Object.keys(grupos).sort();
-            if (sucursales.length === 0) {
-                alert('No hay picking (despachos) registrado hoy para ninguna sucursal.');
-                return;
-            }
-
-            const workbook = XLSX.utils.book_new();
-            const usados = new Set();
-
-            sucursales.forEach(suc => {
-                const items = grupos[suc].map(m => ({
-                    'Cantidad': m.Cantidad,
-                    'Código de Barras, SKU o Número de Serie': m.Barcode || m.SKU,
-                    'Impuesto': '',
-                    'Costo Neto Glosa': ''
-                }));
-                const hoja = XLSX.utils.json_to_sheet(items);
-                estilizarHoja(hoja, { colorHeader: "ff8f00" });
-                XLSX.utils.book_append_sheet(workbook, hoja, nombreHojaSeguro(suc, usados));
-            });
-
-            const hoyStr = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
-            XLSX.writeFile(workbook, `Guia_Picking_Hoy_${hoyStr}.xlsx`);
+                html5QrCode.stop().then(() => document.getElementById('modalScanner').style.display = 'none').catch(() => document.getElementById('modalScanner').style.display = 'none');
+            } else { document.getElementById('modalScanner').style.display = 'none'; }
         };
 
         window.renderizarHistorialGlobal = function(dataArray) {
             historialArray = dataArray;
             const tbody = document.querySelector('#tablaHistorial tbody');
-            const thDetalle = document.getElementById('thDetalle');
-            const thCausa = document.getElementById('thCausa');
-            
-            const hayDetalles = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma' || m.Operacion === 'Despacho');
-            const hayCausas = historialArray.some(m => m.Operacion === 'Merma');
-
-            thDetalle.style.display = hayDetalles ? '' : 'none';
-            thCausa.style.display = hayCausas ? '' : 'none';
-
-            historialArray.sort((a, b) => (b.Timestamp || 0) - (a.Timestamp || 0));
-
             tbody.innerHTML = '';
+            historialArray.sort((a, b) => (b.Timestamp || 0) - (a.Timestamp || 0));
             historialArray.forEach(mov => {
-                let detalleTexto = '-';
-                if (mov.Operacion === 'Traslado' || mov.Operacion === 'Merma') {
-                    detalleTexto = mov.Ubicacion_Traslado || '-';
-                } else if (mov.Operacion === 'Despacho') {
-                    detalleTexto = mov.Sucursal || '-';
-                }
-
-                const tdDetalleHtml = hayDetalles ? `<td>${detalleTexto}</td>` : '';
-                const tdCausaHtml = hayCausas ? `<td>${mov.Causa || '-'}</td>` : '';
-
-                const row = `<tr>
-                    <td>${mov.Fecha}</td>
-                    <td><strong>${mov.Operacion}</strong></td>
-                    <td>${mov.Barcode}</td>
-                    <td><strong>${mov.SKU}</strong></td>
-                    <td>${mov.Producto}</td>
-                    <td>${mov.Variante}</td>
-                    <td>${mov.Tipo}</td>
-                    <td>${mov.Marca}</td>
-                    <td>${mov.Ubicación}</td>
-                    ${tdDetalleHtml}
-                    ${tdCausaHtml}
-                    <td><strong>${mov.Cantidad}</strong></td>
-                    <td>${mov.Responsable}</td>
-                    <td><button class="btn-delete" onclick="window.solicitarEliminacion('${mov.id}')" title="Eliminar registro">🗑️</button></td>
-                </tr>`;
-                tbody.insertAdjacentHTML('beforeend', row);
+                tbody.insertAdjacentHTML('beforeend', `<tr>
+                    <td>${mov.Fecha}</td><td><strong>${mov.Operacion}</strong></td><td>${mov.Barcode}</td>
+                    <td><strong>${mov.SKU}</strong></td><td>${mov.Producto}</td><td>${mov.Variante}</td>
+                    <td>${mov.Tipo}</td><td>${mov.Marca}</td><td>${mov.Ubicacion}</td>
+                    <td>${mov.Ubicacion_Traslado || mov.Sucursal || '-'}</td>
+                    <td>${mov.Causa || '-'}</td><td><strong>${mov.Cantidad}</strong></td>
+                    <td>${mov.Responsable}</td><td><button class="btn-delete" onclick="window.solicitarEliminacion('${mov.id}')">🗑️</button></td>
+                </tr>`);
             });
         };
     </script>
 
+    <!-- FIREBASE INTEGRATION -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        const firebaseConfig = {
+        const db = getFirestore(initializeApp({
             apiKey: "AIzaSyDKEWqcxKax47LMctLzViN2nZMYQJGCQ",
             authDomain: "minnaalmacengeneral.firebaseapp.com",
             projectId: "minnaalmacengeneral",
             storageBucket: "minnaalmacengeneral.appspot.com",
             messagingSenderId: "72362177084",
-            appId: "1:72362177084:web:8b73ee95ec281c3842c939",
-            measurementId: "G-B49T04TD6P"
-        };
+            appId: "1:72362177084:web:8b73ee95ec281c3842c939"
+        }));
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        window.dbFirestoreInstance = db;
-
-        const q = query(collection(db, "movimientos"));
-        onSnapshot(q, (snapshot) => {
-            const tempArray = [];
-            snapshot.forEach((docItem) => {
-                tempArray.push({ id: docItem.id, ...docItem.data() });
-            });
-            if (typeof window.renderizarHistorialGlobal === 'function') {
-                window.renderizarHistorialGlobal(tempArray);
-            }
+        onSnapshot(query(collection(db, "movimientos")), (snapshot) => {
+            const temp = [];
+            snapshot.forEach(d => temp.push({ id: d.id, ...d.data() }));
+            if (typeof window.renderizarHistorialGlobal === 'function') window.renderizarHistorialGlobal(temp);
         });
 
-        window.ejecutarGuardadoNube = async function(movimiento) {
+        window.registrarMovimientoCloud = async function(movimiento) {
             await addDoc(collection(db, "movimientos"), movimiento);
         };
 
-        window.registrarMovimiento = async function(event) {
-            event.preventDefault();
+        window.registrarMovimiento = async function(e) {
+            e.preventDefault();
             const sku = document.getElementById('skuFinal').value;
-            
-            if (!sku) {
-                alert('Selecciona o escanea un producto válido primero.');
-                return;
-            }
-
-            if (!responsableActual) {
-                alert('No se ha identificado un responsable.');
-                window.abrirModalResponsable();
-                return;
-            }
+            if (!sku || !responsableActual) { alert('Verifique SKU y Responsable.'); return; }
 
             const tipoOp = document.getElementById('tipoOperacionVal').value;
-            const ubicacionVal = tipoOp === 'Despacho'
-                ? document.getElementById('ubicacionDespacho').value
-                : document.getElementById('ubicacion').value;
-            const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
-            const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value.trim() : '';
-            const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
-            const responsableVal = responsableActual;
-
-            const movimiento = {
+            const mov = {
                 Fecha: new Date().toLocaleString(),
                 Timestamp: Date.now(),
                 Operacion: tipoOp,
@@ -1536,50 +775,24 @@
                 Variante: document.getElementById('varProducto').value,
                 Tipo: document.getElementById('tipoProductoVal').value,
                 Marca: document.getElementById('marcaProducto').value,
-                Ubicacion: ubicacionVal,
-                Ubicacion_Traslado: ubicacionTrasladoVal,
-                Sucursal: sucursalVal,
-                Causa: causaVal,
+                Ubicacion: tipoOp === 'Despacho' ? document.getElementById('ubicacionDespacho').value : document.getElementById('ubicacion').value,
+                Ubicacion_Traslado: (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '',
+                Sucursal: tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value : '',
+                Causa: tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '',
                 Cantidad: parseInt(document.getElementById('cantidad').value),
-                Responsable: responsableVal
+                Responsable: responsableActual
             };
 
             try {
-                await window.ejecutarGuardadoNube(movimiento);
-
-                if (sucursalVal) localStorage.setItem('minna_ultima_sucursal', sucursalVal);
-
+                await registrarMovimientoCloud(mov);
                 document.getElementById('opForm').reset();
-                resetearCampoCantidad();
-                document.getElementById('skuFinal').value = '';
-                document.getElementById('nombreProducto').value = '';
-                document.getElementById('varProducto').value = '';
-                document.getElementById('tipoProductoVal').value = '';
-                document.getElementById('marcaProducto').value = '';
-                window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
-
-                if (sucursalVal) document.getElementById('sucursalDespacho').value = sucursalVal;
-            } catch (error) {
-                alert("Error al registrar en la nube: " + error.message);
-            }
+            } catch (err) { alert("Error: " + err.message); }
         };
 
-        window.solicitarEliminacion = async function(idDoc) {
-            const pinIngresado = prompt("🔒 Ingresa tu PIN para eliminar este registro:");
-            if (pinIngresado === null) return; 
-
-            const PIN_SECRETO = "NRYS";
-
-            if (pinIngresado.trim().toUpperCase() === PIN_SECRETO) {
-                try {
-                    await deleteDoc(doc(db, "movimientos", idDoc));
-                    alert("🗑️ Registro eliminado correctamente.");
-                } catch (error) {
-                    alert("Error al eliminar de la nube: " + error.message);
-                }
-            } else {
-                alert("❌ PIN incorrecto. No se pudo eliminar el registro.");
-            }
+        window.solicitarEliminacion = async function(id) {
+            if ((prompt("PIN de eliminación:") || '').trim().toUpperCase() === "NRYS") {
+                await deleteDoc(doc(db, "movimientos", id));
+            } else { alert("PIN incorrecto."); }
         };
     </script>
 </body>
