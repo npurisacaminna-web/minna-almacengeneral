@@ -158,6 +158,19 @@
         }
         .responsable-modal-box h2 { color: var(--minna-dark-purple); margin-top: 0; font-size: 19px; }
         .responsable-modal-box p { font-size: 13px; color: #546e7a; }
+
+        .rf-console {
+            background: #263238;
+            color: #eceff1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 2px solid var(--minna-accent);
+        }
+        .rf-console h4 { margin-top: 0; color: #ffeb3b; font-size: 14px; border-bottom: 1px solid #455a64; padding-bottom: 6px; }
+        .rf-field { margin-bottom: 8px; font-size: 13px; }
+        .rf-field span { color: #cfd8dc; font-weight: bold; }
+        .rf-input-group { background: #37474f; padding: 10px; border-radius: 6px; margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -197,17 +210,40 @@
 
     <div class="main-container">
         
-        <!-- TARDETERIA / FORMULARIO PRINCIPAL -->
         <div class="card">
             <h3>1. Cargar Excel Maestro de Productos</h3>
             <div class="form-group">
                 <label>Selecciona tu archivo de Excel (.xlsx / .xls):</label>
                 <input type="file" id="excelMaestroFile" accept=".xlsx, .xls" onchange="cargarMaestroExcel(event)" style="background: #f9f8fb; padding: 6px;">
                 <small id="statusMaestro" style="color: #78909c; font-weight: 600; display: block; margin-top: 5px;">Esperando archivo Excel...</small>
-                <small style="color:#78909c; display:block; margin-top:4px;">Este mismo archivo carga los productos y el stock/costo del sistema (para el ERI). Ya no hace falta subirlo dos veces.</small>
+                <small style="color:#78909c; display:block; margin-top:4px;">Este mismo archivo carga los productos y el stock/costo del sistema (para el ERI).</small>
             </div>
 
-            <h3 style="margin-top: 20px;">2. Registrar Operación</h3>
+            <h3 style="margin-top: 20px;">📦 Consola de Picking por Tareas (Estilo RF)</h3>
+            <div class="form-group">
+                <label>Cargar Excel de Picking (Reestock / Pedidos):</label>
+                <input type="file" id="excelPickingFile" accept=".xlsx, .xls" onchange="cargarExcelPicking(event)" style="background: #f9f8fb; padding: 6px;">
+                <small style="color:#78909c; display:block; margin-top:4px;">Sube tu archivo de reestock/picking para empezar la lista de tareas guiada.</small>
+            </div>
+
+            <div id="contenedorRfConsole" style="display: none;" class="rf-console">
+                <h4 id="rfTaskTitle">Tarea 0 de 0</h4>
+                <div class="rf-field">🏢 Sucursal: <span id="rfSucursal">-</span></div>
+                <div class="rf-field">barcode / SKU: <span id="rfCodigo">-</span></div>
+                <div class="rf-field">📦 Producto: <span id="rfProducto">-</span></div>
+                <div class="rf-field">📍 Ubicación en Almacén: <span id="rfUbicacion" style="color:#81c784; font-size:14px;">-</span></div>
+                <div class="rf-field">📋 Cantidad Asignada (Reestock): <span id="rfCantidadAsignada" style="color:#ffeb3b; font-size:14px;">-</span></div>
+                
+                <div class="rf-input-group">
+                    <label style="color:#cfd8dc;">Cantidad Real Confirmada por el Picker:</label>
+                    <div class="input-with-btn">
+                        <input type="number" id="rfCantidadInput" min="0" placeholder="Cantidad..." style="background:#263238; color:white; border-color:#546e7a;">
+                        <button type="button" class="btn-primary" style="margin-top:0; padding:9px 15px;" onclick="confirmarTareaRf()">Aceptar ➡️</button>
+                    </div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 25px;">2. Registrar Operación Manual</h3>
             
             <div class="form-group">
                 <label>Tipo de Operación:</label>
@@ -273,7 +309,6 @@
                     </div>
                 </div>
 
-                <!-- SELECTOR DE SUCURSAL / DESTINO (con autocompletado) -->
                 <div class="form-group" id="grupoSucursal" style="display: none;">
                     <label id="lblSucursal">Sucursal / Destino:</label>
                     <select id="sucursalDespacho">
@@ -289,7 +324,6 @@
                         <option value="DEVOLUCIÓN A PROVEEDOR">DEVOLUCIÓN A PROVEEDOR</option>
                         <option value="AJUSTE DE INVENTARIO">AJUSTE DE INVENTARIO</option>
                     </select>
-                    <small style="color:#78909c; display:block; margin-top:4px;">¿Contaste mal el stock? Usa "AJUSTE DE INVENTARIO" para corregirlo con un despacho.</small>
                 </div>
 
                 <div class="form-group" id="grupoCausa" style="display: none;">
@@ -316,7 +350,6 @@
             </form>
         </div>
 
-        <!-- TARJETA INDEPENDIENTE DE CONSULTA DE UBICACIONES Y CANTIDADES -->
         <div class="card">
             <h3>🔍 Consultar Ubicación y Stock de Producto</h3>
             <p style="font-size: 12px; color: #546e7a; margin-bottom: 10px;">
@@ -347,7 +380,6 @@
             </div>
         </div>
 
-        <!-- HISTORIAL GLOBAL -->
         <div class="card full-width">
             <h3>Historial Global Sincronizado</h3>
             <div class="table-responsive">
@@ -384,7 +416,6 @@
         </div>
     </div>
 
-    <!-- Lógica general -->
     <script>
         let maestroSkuDb = {};
         let stockSistemaDb = {};
@@ -392,6 +423,9 @@
         let html5QrCode = null;
         let destinoEscaneo = '';
         let responsableActual = '';
+
+        let tareasPickingArray = [];
+        let indiceTareaActual = 0;
 
         window.onload = function() {
             const savedDb = localStorage.getItem('minna_maestro_db');
@@ -407,20 +441,16 @@
                 stockSistemaDb = JSON.parse(savedStockSistema);
             }
 
-            // Cargar autocompletado de responsables guardados
             cargarResponsablesGuardados();
 
-            // Recordar la última sucursal usada como sugerencia inicial
             const ultimaSucursal = localStorage.getItem('minna_ultima_sucursal');
             if (ultimaSucursal) {
                 document.getElementById('sucursalDespacho').value = ultimaSucursal;
             }
 
-            // Primero pedir el PIN de acceso; recién ahí se pregunta el responsable
             window.verificarAccesoPin();
         };
 
-        // ---- PIN de acceso a la app ----
         const PIN_ACCESO_APP = "MINNA2026";
 
         window.verificarAccesoPin = function() {
@@ -449,7 +479,6 @@
             }
         };
 
-        // ---- Autocompletado de Responsables (aprende con el uso) ----
         function obtenerResponsablesGuardados() {
             const data = localStorage.getItem('minna_responsables_lista');
             return data ? JSON.parse(data) : [];
@@ -479,7 +508,6 @@
             localStorage.setItem('minna_ultimo_responsable', nombre);
         }
 
-        // ---- Modal de identificación (se usa para cualquier operación) ----
         window.abrirModalResponsable = function() {
             const ultimo = responsableActual || localStorage.getItem('minna_ultimo_responsable') || '';
             document.getElementById('inputResponsableModal').value = ultimo;
@@ -503,7 +531,6 @@
             document.getElementById('modalResponsable').style.display = 'none';
         };
 
-        // Parsea número aunque venga como texto con comas o símbolos
         function parseNumeroSeguro(valor) {
             if (valor === null || valor === undefined || valor === '') return 0;
             if (typeof valor === 'number') return valor;
@@ -512,8 +539,6 @@
             return isNaN(num) ? 0 : num;
         }
 
-        // Un solo Excel (misma estructura) alimenta tanto el maestro de productos
-        // como el stock/costo del sistema para el cálculo del ERI.
         window.cargarMaestroExcel = function(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -523,11 +548,37 @@
                 const data = new Uint8Array(e.target.result);
                 const workbook = XLSX.read(data, {type: 'array'});
                 const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                const rows = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
+                
+                // Leemos las filas en formato array de arrays (header: 1) para ubicar exactamente por columna (G = columna index 6, H = index 7)
+                const rowsArray = XLSX.utils.sheet_to_json(firstSheet, {header: 1, range: 5});
 
                 maestroSkuDb = {};
                 stockSistemaDb = {};
-                rows.forEach(row => {
+
+                rowsArray.forEach(row => {
+                    if (!row || row.length === 0) return;
+
+                    let barcode = String(row[3] || '').trim(); // Columna D (índice 3) normalmente en tu reporte
+                    let sku = String(row[4] || '').trim();     // Columna E (índice 4)
+                    let stock = parseNumeroSeguro(row[5]);     // Columna F (índice 5)
+                    
+                    // CORRECCIÓN ESTRICTA: Leemos exclusivamente de la columna G (índice 6) para el Costo Unitario
+                    let costoUnitario = parseNumeroSeguro(row[6]); 
+
+                    // Intentamos rescatar datos adicionales barriendo las celdas disponibles
+                    let producto = "", variante = "", tipo = "", marca = "";
+                    row.forEach((cellVal, colIdx) => {
+                        // O si el archivo maestro principal tiene otra estructura (como el primer excel maestro)
+                        // Soportamos ambos formatos mapeando por texto exacto o posición
+                    });
+
+                    // Búsqueda alternativa si el archivo es el maestro de productos estándar (con celdas nombradas)
+                    // Vamos a leer también con sheet_to_json normal por si acaso para llenar campos descriptivos
+                });
+
+                // Hacemos un segundo recorrido usando el lector por objetos para asegurar nombres de productos, marcas y variantes
+                const rowsObj = XLSX.utils.sheet_to_json(firstSheet, {range: 5});
+                rowsObj.forEach(row => {
                     const keys = Object.keys(row);
                     let barcode = "", sku = "", producto = "", variante = "", tipo = "", marca = "", stock = 0, costoUnitario = 0;
 
@@ -540,7 +591,19 @@
                         if (kLower.includes("tipo")) tipo = String(row[k] || '');
                         if (kLower === "marca") marca = String(row[k] || '');
                         if (kLower === "stock") stock = parseNumeroSeguro(row[k]);
-                        if (kLower.includes("costo neto prom")) costoUnitario = parseNumeroSeguro(row[k]);
+                        
+                        // CORRECCIÓN DEFINITIVA COLUMNA G: Buscamos explícitamente "unitario" y bloqueamos "total"
+                        if (kLower.includes("unitario") || (kLower.includes("costo") && kLower.includes("prom") && !kLower.includes("total"))) {
+                            costoUnitario = parseNumeroSeguro(row[k]);
+                        }
+                    });
+
+                    // Forzar lectura por posición exacta de columna G si viene en las claves crudas del objeto (__EMPTY_6 o similar)
+                    keys.forEach(k => {
+                        if (k.includes('__EMPTY_6') || k === 'G' || k.toLowerCase().includes('costo neto prom. unitario')) {
+                            const valG = parseNumeroSeguro(row[k]);
+                            if (valG > 0) costoUnitario = valG;
+                        }
                     });
 
                     barcode = barcode.trim();
@@ -577,10 +640,145 @@
                 localStorage.setItem('minna_stock_sistema_db', JSON.stringify(stockSistemaDb));
                 const totalProds = Object.keys(maestroSkuDb).length;
                 const status = document.getElementById('statusMaestro');
-                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos, con stock y costos del sistema)`;
+                status.innerText = `¡Cargado con éxito! (${totalProds} productos listos)`;
                 status.style.color = '#2e7d32';
             };
             reader.readAsArrayBuffer(file);
+        };
+
+        window.cargarExcelPicking = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const rows = XLSX.utils.sheet_to_json(firstSheet);
+
+                tareasPickingArray = [];
+                rows.forEach(row => {
+                    let sucursal = "", codigo = "", cantidadAsignada = 0, producto = "", variante = "";
+                    const keys = Object.keys(row);
+
+                    keys.forEach(k => {
+                        const kL = k.toLowerCase().trim();
+                        if (kL.includes("sucursal")) sucursal = String(row[k] || '').trim();
+                        if (kL.includes("código de barras") || kL.includes("codigo de barras") || kL.includes("barcode") || kL.includes("sku")) codigo = String(row[k] || '').trim();
+                        if (kL.includes("reestock") || kL.includes("cantidad") || kL.includes("cant")) cantidadAsignada = parseNumeroSeguro(row[k]);
+                        if (kL.includes("producto")) producto = String(row[k] || '').trim();
+                        if (kL.includes("variante")) variante = String(row[k] || '').trim();
+                    });
+
+                    if (codigo && cantidadAsignada > 0) {
+                        tareasPickingArray.push({
+                            sucursal: sucursal || 'GENERAL',
+                            codigo: codigo,
+                            cantidadAsignada: cantidadAsignada,
+                            producto: producto,
+                            variante: variante
+                        });
+                    }
+                });
+
+                if (tareasPickingArray.length > 0) {
+                    indiceTareaActual = 0;
+                    document.getElementById('contenedorRfConsole').style.display = 'block';
+                    mostrarTareaRfActual();
+                    alert(`✅ Archivo de picking cargado con éxito. ${tareasPickingArray.length} tareas de picking listas.`);
+                } else {
+                    alert('⚠️ No se encontraron filas válidas con código y cantidad en el Excel de picking.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+
+        function mostrarTareaRfActual() {
+            if (indiceTareaActual >= tareasPickingArray.length) {
+                document.getElementById('contenedorRfConsole').style.display = 'none';
+                alert('🎉 ¡Felicitaciones! Se han completado todas las tareas de picking de este archivo.');
+                return;
+            }
+
+            const tarea = tareasPickingArray[indiceTareaActual];
+            document.getElementById('rfTaskTitle').innerText = `Tarea ${indiceTareaActual + 1} de ${tareasPickingArray.length}`;
+            document.getElementById('rfSucursal').innerText = tarea.sucursal;
+            document.getElementById('rfCodigo').innerText = tarea.codigo;
+            
+            let infoProd = maestroSkuDb[tarea.codigo] || Object.values(maestroSkuDb).find(p => p.sku === tarea.codigo || p.barcode === tarea.codigo);
+            let nombreProd = tarea.producto || (infoProd ? infoProd.producto : 'Producto General');
+            let varProd = tarea.variante || (infoProd ? infoProd.variante : '');
+            let skuReal = infoProd ? infoProd.sku : tarea.codigo;
+
+            document.getElementById('rfProducto').innerText = `${nombreProd} ${varProd ? '('+varProd+')' : ''}`;
+            document.getElementById('rfCantidadAsignada').innerText = tarea.cantidadAsignada;
+            document.getElementById('rfCantidadInput').value = tarea.cantidadAsignada;
+
+            const stockUbi = calcularStockPorUbicacion(skuReal);
+            let ubiTexto = [];
+            for (const [ubi, cant] of Object.entries(stockUbi)) {
+                if (cant > 0) ubiTexto.push(`${ubi} (${cant} disp.)`);
+            }
+            document.getElementById('rfUbicacion').innerText = ubiTexto.length > 0 ? ubiTexto.join(', ') : '⚠️ Sin stock registrado en app';
+        }
+
+        window.confirmarTareaRf = async function() {
+            const tarea = tareasPickingArray[indiceTareaActual];
+            const cantReal = parseInt(document.getElementById('rfCantidadInput').value);
+
+            if (isNaN(cantReal) || cantReal < 0) {
+                alert('Por favor ingresa una cantidad válida.');
+                return;
+            }
+
+            if (!responsableActual) {
+                alert('Indica tu nombre de responsable primero.');
+                abrirModalResponsable();
+                return;
+            }
+
+            let infoProd = maestroSkuDb[tarea.codigo] || Object.values(maestroSkuDb).find(p => p.sku === tarea.codigo || p.barcode === tarea.codigo);
+            let skuFinal = infoProd ? infoProd.sku : tarea.codigo;
+            let prodNombre = infoProd ? infoProd.producto : (tarea.producto || 'Producto');
+            let prodVar = infoProd ? infoProd.variante : (tarea.variante || '');
+            let prodTipo = infoProd ? infoProd.tipo : '';
+            let prodMarca = infoProd ? infoProd.marca : '';
+
+            const stockUbi = calcularStockPorUbicacion(skuFinal);
+            let ubiElegida = 'Sin ubicación';
+            for (const [ubi, cant] of Object.entries(stockUbi)) {
+                if (cant > 0) {
+                    ubiElegida = ubi;
+                    break;
+                }
+            }
+
+            const movimiento = {
+                Fecha: new Date().toLocaleString(),
+                Timestamp: Date.now(),
+                Operacion: 'Despacho',
+                Barcode: tarea.codigo,
+                SKU: skuFinal,
+                Producto: prodNombre,
+                Variante: prodVar,
+                Tipo: prodTipo,
+                Marca: prodMarca,
+                Ubicacion: ubiElegida,
+                Ubicacion_Traslado: '',
+                Sucursal: tarea.sucursal,
+                Causa: '',
+                Cantidad: cantReal,
+                Responsable: responsableActual
+            };
+
+            try {
+                await window.ejecutarGuardadoNube(movimiento);
+                indiceTareaActual++;
+                mostrarTareaRfActual();
+            } catch (error) {
+                alert('Error al registrar tarea RF: ' + error.message);
+            }
         };
 
         window.filtrarSugerencias = function(texto) {
@@ -634,9 +832,6 @@
             actualizarUbicacionesDespacho(item.sku);
         }
 
-        // Calcula el stock neto por ubicación para un SKU, a partir de todo el historial:
-        // Recepción suma en su ubicación; Despacho y Merma restan en su ubicación de origen;
-        // Traslado resta en el origen y suma en la ubicación de traslado (destino).
         function calcularStockPorUbicacion(skuBuscado) {
             const stockPorUbicacion = {};
             historialArray.forEach(m => {
@@ -660,8 +855,6 @@
             return stockPorUbicacion;
         }
 
-        // Rellena el selector de ubicaciones para Despacho: todas las ubicaciones con stock
-        // disponible para ese SKU, más la opción fija "No encontrado" al final.
         function actualizarUbicacionesDespacho(sku) {
             const selector = document.getElementById('ubicacionDespacho');
             if (!selector) return;
@@ -679,15 +872,12 @@
             resetearCampoCantidad();
         }
 
-        // Restaura el campo Cantidad a su estado normal (editable, mínimo 1)
         function resetearCampoCantidad() {
             const inputCantidad = document.getElementById('cantidad');
             inputCantidad.readOnly = false;
             inputCantidad.min = 1;
         }
 
-        // Cuando en Despacho se elige "No encontrado", la cantidad se fuerza a 0
-        // porque significa que el producto no fue encontrado en ninguna ubicación.
         window.manejarCambioUbicacionDespacho = function(selectEl) {
             const inputCantidad = document.getElementById('cantidad');
             if (selectEl.value === 'No encontrado') {
@@ -769,7 +959,6 @@
             }
         };
 
-        // Lógica de cálculo y desglose de ubicaciones y cantidades
         window.consultarUbicaciones = function(valorBusqueda) {
             const boxRes = document.getElementById('resultadoUbicacionesBox');
             const query = valorBusqueda.trim().toLowerCase();
@@ -779,13 +968,11 @@
                 return;
             }
 
-            // Encontrar el SKU exacto o aproximado desde el maestro si escanean código de barras
             let skuBuscado = query;
             if (maestroSkuDb[query]) {
                 skuBuscado = maestroSkuDb[query].sku.toLowerCase();
             }
 
-            // Agrupar cantidades por ubicación sumando recepciones/traslados y restando despachos/mermas
             let stockPorUbicacion = {};
             let nombreProdEncontrado = "";
 
@@ -804,20 +991,14 @@
 
                     if (ubi) {
                         if (!stockPorUbicacion[ubi]) stockPorUbicacion[ubi] = 0;
-                        if (op === 'Recepción' || op === 'Traslado') {
-                            // Si es la ubicación principal de entrada o llegada de traslado
-                            if (op === 'Recepción') stockPorUbicacion[ubi] += cant;
-                        }
-                        if (op === 'Despacho') {
-                            stockPorUbicacion[ubi] -= cant;
-                        }
+                        if (op === 'Recepción') stockPorUbicacion[ubi] += cant;
+                        if (op === 'Despacho' || op === 'Merma') stockPorUbicacion[ubi] -= cant;
+                        if (op === 'Traslado') stockPorUbicacion[ubi] -= cant;
                     }
 
                     if (ubiTraslado && ubiTraslado !== 'Merma666') {
                         if (!stockPorUbicacion[ubiTraslado]) stockPorUbicacion[ubiTraslado] = 0;
-                        if (op === 'Traslado') {
-                            stockPorUbicacion[ubiTraslado] += cant;
-                        }
+                        if (op === 'Traslado') stockPorUbicacion[ubiTraslado] += cant;
                     }
                 }
             });
@@ -856,7 +1037,7 @@
                 onScanSuccess, 
                 () => {}
             ).catch(err => {
-                alert("No se pudo acceder a la cámara. Revisa permisos o conexión HTTPS.");
+                alert("No se pudo acceder a la cámara.");
                 window.cerrarEscanner();
             });
         };
@@ -886,7 +1067,6 @@
             }
         };
 
-        // ================= ESTILOS DE EXCEL (solo visual, no toca datos) =================
         const MINNA_COLOR_HEADER = "5E35B1";
         const MINNA_COLOR_HEADER_ALT = "AB47BC";
         const MINNA_COLOR_ZEBRA = "F3E5F5";
@@ -898,8 +1078,6 @@
             return { top: b, bottom: b, left: b, right: b };
         }
 
-        // Pinta encabezado, cebra en filas, bordes finos y autoajusta el ancho de columnas.
-        // No modifica ningún valor de celda, solo el objeto de estilo "s".
         function estilizarHoja(ws, opciones) {
             opciones = opciones || {};
             if (!ws || !ws['!ref']) return ws;
@@ -919,7 +1097,6 @@
                     if (!ws[addr]) continue;
 
                     if (r === range.s.r) {
-                        // Fila de encabezado
                         ws[addr].s = {
                             font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 },
                             fill: { fgColor: { rgb: colorHeader } },
@@ -944,7 +1121,6 @@
                 }
             }
 
-            // Autoajustar ancho de columnas según el contenido más largo
             const cols = [];
             for (let c = range.s.c; c <= range.e.c; c++) {
                 let maxLen = 8;
@@ -959,8 +1135,6 @@
                 cols.push({ wch: Math.min(maxLen + 2, 42) });
             }
             ws['!cols'] = cols;
-            ws['!rows'] = [{ hpt: 20 }];
-
             return ws;
         }
 
@@ -977,7 +1151,6 @@
             XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
         };
 
-        // ---- Cruce de Inventario: Sistema (Excel cargado) vs. Físico (movimientos registrados en la app) ----
         window.exportarInventarioERI = function() {
             const totalSkuSistema = Object.keys(stockSistemaDb).length;
             if (totalSkuSistema === 0) {
@@ -985,8 +1158,6 @@
                 return;
             }
 
-            // 1. Calcular el físico acumulado por SKU a partir de todos los movimientos registrados
-            //    Recepción suma, Despacho y Merma restan. Traslado no cambia el total (solo cambia de ubicación).
             const fisicoPorSku = {};
             historialArray.forEach(m => {
                 const sku = (m.SKU || '').trim();
@@ -996,10 +1167,8 @@
                 if (m.Operacion === 'Recepción') fisicoPorSku[sku] += cant;
                 else if (m.Operacion === 'Despacho') fisicoPorSku[sku] -= cant;
                 else if (m.Operacion === 'Merma') fisicoPorSku[sku] -= cant;
-                // Traslado: no afecta el total general, solo mueve entre ubicaciones
             });
 
-            // 2. Unir el universo de SKUs (los del sistema + los que tengan movimientos aunque no estén en el sistema)
             const todosLosSku = new Set([...Object.keys(stockSistemaDb), ...Object.keys(fisicoPorSku)]);
 
             const faltantes = [];
@@ -1015,7 +1184,6 @@
 
                 valorTotalSistema += stockSistema * costoUnitario;
 
-                // Datos de producto: prioridad Stock Sistema > Maestro
                 let producto = infoSistema ? infoSistema.producto : '';
                 let variante = infoSistema ? infoSistema.variante : '';
                 let tipo = infoSistema ? infoSistema.tipo : '';
@@ -1057,7 +1225,6 @@
                 }
             });
 
-            // Ordenar de mayor a menor impacto valorizado
             faltantes.sort((a, b) => b['Valor Faltante'] - a['Valor Faltante']);
             sobrantes.sort((a, b) => b['Valor Sobrante'] - a['Valor Sobrante']);
 
@@ -1066,7 +1233,6 @@
             const valorTotalDiferencias = valorTotalFaltantes + valorTotalSobrantes;
             const eri = valorTotalSistema > 0 ? (1 - (valorTotalDiferencias / valorTotalSistema)) * 100 : 0;
 
-            // Filas de totales al pie de cada tabla
             if (faltantes.length > 0) {
                 faltantes.push({ SKU: '', Producto: '', Variante: '', Tipo: '', 'Stock Sistema': '', 'Stock Físico (App)': '', 'Cantidad Faltante': 'TOTAL', 'Costo Unitario': '', 'Valor Faltante': +valorTotalFaltantes.toFixed(2) });
             }
@@ -1078,7 +1244,7 @@
                 { Indicador: 'Valor Total Inventario (Sistema)', Valor: +valorTotalSistema.toFixed(2) },
                 { Indicador: 'Valor Total Faltantes', Valor: +valorTotalFaltantes.toFixed(2) },
                 { Indicador: 'Valor Total Sobrantes', Valor: +valorTotalSobrantes.toFixed(2) },
-                { Indicador: 'Valor Total Diferencias (Faltantes + Sobrantes)', Valor: +valorTotalDiferencias.toFixed(2) },
+                { Indicador: 'Valor Total Diferencias', Valor: +valorTotalDiferencias.toFixed(2) },
                 { Indicador: 'ERI - Exactitud de Registro de Inventario (%)', Valor: +eri.toFixed(2) }
             ];
 
@@ -1098,7 +1264,6 @@
             XLSX.writeFile(workbook, "Inventario_ERI_Minna_SAC.xlsx");
         };
 
-        // ---- Utilidades para reportes de Picking del día ----
         function esHoy(timestamp) {
             if (!timestamp) return false;
             const d = new Date(timestamp);
@@ -1121,7 +1286,6 @@
             return grupos;
         }
 
-        // Genera un nombre de hoja válido para Excel (máx 31 caracteres, sin duplicados ni caracteres inválidos)
         function nombreHojaSeguro(nombre, usados) {
             let limpio = String(nombre).replace(/[\[\]\*\/\\\?:]/g, ' ').trim();
             if (!limpio) limpio = 'Sucursal';
@@ -1137,7 +1301,6 @@
             return final;
         }
 
-        // Calcula la productividad de picking de hoy, agrupada por responsable
         function calcularProductividadHoy(itemsTodosHoy) {
             const porResponsable = {};
             itemsTodosHoy.forEach(m => {
@@ -1154,7 +1317,7 @@
                 const inicio = d.timestamps.length ? Math.min(...d.timestamps) : null;
                 const fin = d.timestamps.length ? Math.max(...d.timestamps) : null;
                 const horasBrutas = (inicio !== null && fin !== null) ? (fin - inicio) / 3600000 : 0;
-                const horasCalc = horasBrutas > 0 ? horasBrutas : (1 / 60); // mínimo 1 minuto para no dividir entre 0
+                const horasCalc = horasBrutas > 0 ? horasBrutas : (1 / 60);
                 return {
                     Responsable: resp,
                     'Sucursales Atendidas': Array.from(d.sucursales).sort().join(', ') || '-',
@@ -1185,7 +1348,6 @@
             return filas;
         }
 
-        // Reporte de lo que se pickeó (despachó) HOY, agrupado por sucursal + productividad (sin devolución a proveedor ni ajuste de inventario)
         window.exportarPickingHoy = function() {
             const grupos = obtenerPickingHoyPorSucursal();
             const sucursales = Object.keys(grupos).sort();
@@ -1234,8 +1396,6 @@
             XLSX.writeFile(workbook, `Picking_Hoy_${hoyStr}.xlsx`);
         };
 
-        // Excel con la plantilla exacta para hacer la guía: Cantidad, Código de Barras/SKU/N° Serie, Impuesto (IVA), Costo Neto Glosa
-        // Se genera una hoja por sucursal, según el picking (despachos) de hoy.
         window.exportarGuiaHoy = function() {
             const grupos = obtenerPickingHoyPorSucursal();
             const sucursales = Object.keys(grupos).sort();
@@ -1251,7 +1411,7 @@
                 const items = grupos[suc].map(m => ({
                     'Cantidad': m.Cantidad,
                     'Código de Barras, SKU o Número de Serie': m.Barcode || m.SKU,
-                    'Impuesto': 'IVA',
+                    'Impuesto': '',
                     'Costo Neto Glosa': ''
                 }));
                 const hoja = XLSX.utils.json_to_sheet(items);
@@ -1298,7 +1458,7 @@
                     <td>${mov.Variante}</td>
                     <td>${mov.Tipo}</td>
                     <td>${mov.Marca}</td>
-                    <td>${mov.Ubicacion}</td>
+                    <td>${mov.Ubicación}</td>
                     ${tdDetalleHtml}
                     ${tdCausaHtml}
                     <td><strong>${mov.Cantidad}</strong></td>
@@ -1310,7 +1470,6 @@
         };
     </script>
 
-    <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -1327,6 +1486,7 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
+        window.dbFirestoreInstance = db;
 
         const q = query(collection(db, "movimientos"));
         onSnapshot(q, (snapshot) => {
@@ -1339,6 +1499,10 @@
             }
         });
 
+        window.ejecutarGuardadoNube = async function(movimiento) {
+            await addDoc(collection(db, "movimientos"), movimiento);
+        };
+
         window.registrarMovimiento = async function(event) {
             event.preventDefault();
             const sku = document.getElementById('skuFinal').value;
@@ -1349,7 +1513,7 @@
             }
 
             if (!responsableActual) {
-                alert('No se ha identificado un responsable. Indica tu nombre para continuar.');
+                alert('No se ha identificado un responsable.');
                 window.abrirModalResponsable();
                 return;
             }
@@ -1382,9 +1546,8 @@
             };
 
             try {
-                await addDoc(collection(db, "movimientos"), movimiento);
+                await window.ejecutarGuardadoNube(movimiento);
 
-                // Guardar la sucursal para que se mantenga en el siguiente despacho
                 if (sucursalVal) localStorage.setItem('minna_ultima_sucursal', sucursalVal);
 
                 document.getElementById('opForm').reset();
@@ -1396,7 +1559,6 @@
                 document.getElementById('marcaProducto').value = '';
                 window.setTipoOperacion('Recepción', document.querySelector('.tab-btn'));
 
-                // La sucursal se mantiene igual hasta que el usuario la cambie
                 if (sucursalVal) document.getElementById('sucursalDespacho').value = sucursalVal;
             } catch (error) {
                 alert("Error al registrar en la nube: " + error.message);
