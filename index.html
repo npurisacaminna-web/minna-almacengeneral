@@ -6,6 +6,7 @@
     <title>Minna S.A.C. - Control de Almacén K-Beauty</title>
     <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 
     <style>
         :root {
@@ -95,6 +96,9 @@
         .btn-delete { background: #ffebee; color: #c62828; border: 1px solid #ffcdd2; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; }
         .btn-delete:hover { background: #ffcdd2; }
 
+        .btn-edit { background: #ede7f6; color: var(--minna-dark-purple); border: 1px solid #d1c4e9; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-right: 4px; }
+        .btn-edit:hover { background: #d1c4e9; }
+
         .tabs { display: flex; gap: 4px; margin-bottom: 12px; flex-wrap: wrap; }
         .tab-btn { background: #ede7f6; color: #546e7a; border: none; padding: 8px 6px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 11px; flex: 1; min-width: 70px; text-align: center; }
         .tab-btn.active { background: var(--minna-dark-purple); color: white; }
@@ -183,6 +187,42 @@
         .picking-info-row strong { color: #fff; }
         .btn-skip { background: #455a64; color: #fff; border: none; padding: 12px; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; font-size: 13px; margin-top: 8px; }
         .btn-skip:hover { background: #37474f; }
+
+        /* ---- Layout 3D del Almacén ---- */
+        .layout3d-wrap { margin-top: 4px; }
+        .layout3d-legend { display: flex; flex-wrap: wrap; gap: 10px; margin: 8px 0 10px 0; font-size: 11px; color: #546e7a; }
+        .layout3d-legend span { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
+        .layout3d-legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+        #contenedorLayout3D {
+            width: 100%;
+            height: 420px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #eceff1;
+            border: 1px solid var(--card-border);
+            touch-action: none;
+            cursor: grab;
+            position: relative;
+        }
+        #contenedorLayout3D:active { cursor: grabbing; }
+        .layout3d-hint { font-size: 11px; color: #90a4ae; margin-top: 6px; text-align: center; }
+        #modalDetalleUbicacion3D {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(94, 53, 177, 0.97);
+            z-index: 10003;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        #modalDetalleUbicacion3D .responsable-modal-box { max-width: 420px; text-align: left; max-height: 80vh; overflow-y: auto; }
+        #modalDetalleUbicacion3D h2 { text-align: center; }
+        .detalle3d-item { display: flex; justify-content: space-between; gap: 10px; padding: 8px 10px; border-radius: 6px; margin-bottom: 6px; font-size: 12px; background: #f9f8fb; border-left: 4px solid #b0bec5; }
+        .detalle3d-item.roja { border-left-color: #ef5350; background: #ffebee; }
+        .detalle3d-item.amarilla { border-left-color: #ffca28; background: #fff8e1; }
+        .detalle3d-item.verde { border-left-color: #66bb6a; background: #e8f5e9; }
+        .detalle3d-item b { color: var(--minna-dark-purple); }
     </style>
 </head>
 <body>
@@ -220,6 +260,34 @@
         </div>
     </div>
 
+    <div id="modalEditarUbicacion" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(94, 53, 177, 0.97); z-index: 10002; justify-content: center; align-items: center; padding: 15px;">
+        <div class="responsable-modal-box">
+            <h2>✏️ Editar Ubicación</h2>
+            <p id="editarUbicacionInfo" style="text-align:left;"></p>
+            <div class="form-group" style="text-align:left;">
+                <label>Ubicaciones disponibles (desglose por stock):</label>
+                <select id="selectEditarUbicacion">
+                    <option value="">Selecciona una ubicación...</option>
+                </select>
+            </div>
+            <div class="form-group" style="text-align:left;">
+                <label>O escribe otra ubicación manualmente:</label>
+                <input type="text" id="inputEditarUbicacionManual" placeholder="Ej. A-01" autocomplete="off">
+            </div>
+            <button type="button" class="btn-primary" onclick="confirmarEdicionUbicacion()">Guardar Ubicación ✅</button>
+            <button type="button" class="btn-close-scanner" style="margin-top:8px;" onclick="cerrarModalEditarUbicacion()">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalDetalleUbicacion3D">
+        <div class="responsable-modal-box">
+            <h2 id="tituloDetalleUbicacion3D">📍 Ubicación</h2>
+            <div id="contenidoDetalleUbicacion3D"></div>
+            <button type="button" class="btn-close-scanner" style="margin-top:8px;" onclick="cerrarDetalleUbicacion3D()">Cerrar</button>
+        </div>
+    </div>
+
+
     <div class="main-container">
         
         <!-- TARDETERIA / FORMULARIO PRINCIPAL -->
@@ -229,7 +297,7 @@
                 <label>Selecciona tu archivo de Excel (.xlsx / .xls):</label>
                 <input type="file" id="excelMaestroFile" accept=".xlsx, .xls" onchange="cargarMaestroExcel(event)" style="background: #f9f8fb; padding: 6px;">
                 <small id="statusMaestro" style="color: #78909c; font-weight: 600; display: block; margin-top: 5px;">Esperando archivo Excel...</small>
-                <small style="color:#78909c; display:block; margin-top:4px;">Este mismo archivo carga los productos y el stock/costo del sistema (para el ERI). Ya no hace falta subirlo dos veces.</small>
+                <small style="color:#78909c; display:block; margin-top:4px;">Este archivo se debe cargar al final del día (plan de 9pm) para sincerar y ver el ERI, faltantes y sobrantes.</small>
                 <div id="alertaMaestroDiario" class="alerta-maestro-diario" style="display:none;"></div>
             </div>
 
@@ -413,6 +481,22 @@
             </div>
         </div>
 
+        <!-- LAYOUT 3D DEL ALMACÉN -->
+        <div class="card full-width">
+            <h3>🏢 Layout 3D del Almacén</h3>
+            <p style="font-size: 12px; color: #546e7a; margin-bottom: 10px;">
+                9 andamios (A-I), 5 niveles cada uno y 4 posiciones por nivel (el andamio G tiene solo 3). Arrastra para rotar, rueda/pellizca para hacer zoom, y toca una caja para ver qué hay en esa ubicación.
+            </p>
+            <div class="layout3d-legend">
+                <span><i style="background:#ef5350;"></i> Rojo: algún código con 10 o menos</span>
+                <span><i style="background:#ffca28;"></i> Amarillo: stock intermedio</span>
+                <span><i style="background:#66bb6a;"></i> Verde: todo arriba de 30</span>
+                <span><i style="background:#e0e0e0;"></i> Gris: ubicación vacía</span>
+            </div>
+            <div id="contenedorLayout3D"></div>
+            <p class="layout3d-hint" id="layout3dHint">Cargando layout 3D...</p>
+        </div>
+
         <!-- HISTORIAL GLOBAL -->
         <div class="card full-width">
             <h3>Historial Global Sincronizado</h3>
@@ -462,6 +546,9 @@
         // ---- Estado de la Consola de Picking por Tareas (no se persiste: cada persona lo carga en su equipo) ----
         let pickingTareas = [];
         let pickingIndiceActual = 0;
+
+        // ---- Estado de edición de ubicación de un registro del historial ----
+        let docEnEdicion = '';
 
         window.onload = function() {
             const savedDb = localStorage.getItem('minna_maestro_db');
@@ -870,21 +957,65 @@
             return stockPorUbicacion;
         }
 
+        // Igual que calcularStockPorUbicacion, pero con búsqueda amplia (SKU, código de
+        // barras O nombre de producto — el que primero coincida) en vez de solo el SKU exacto.
+        // Existe porque en registros viejos que salieron como "No encontrado" el campo SKU
+        // quedó mal guardado (no coincide con el SKU real del producto), así que filtrar solo
+        // por SKU no encuentra las ubicaciones reales aunque el mismo producto sí las tenga.
+        function calcularStockPorUbicacionAmplio(criterios) {
+            const skuBuscado = (criterios.sku || '').trim().toLowerCase();
+            const barcodeBuscado = (criterios.barcode || '').trim().toLowerCase();
+            const productoBuscado = (criterios.producto || '').trim().toLowerCase();
+
+            const stockPorUbicacion = {};
+            historialArray.forEach(m => {
+                const mSku = (m.SKU || '').toLowerCase();
+                const mBarcode = (m.Barcode || '').toLowerCase();
+                const mProd = (m.Producto || '').toLowerCase();
+
+                const coincide = (skuBuscado && mSku === skuBuscado)
+                    || (barcodeBuscado && mBarcode === barcodeBuscado)
+                    || (productoBuscado && mProd === productoBuscado);
+                if (!coincide) return;
+
+                const cant = parseInt(m.Cantidad) || 0;
+                const ubicacionOrigen = m.Ubicacion || 'Sin ubicación';
+                const ubicacionDestino = m.Ubicacion_Traslado;
+
+                if (m.Operacion === 'Recepción') {
+                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) + cant;
+                } else if (m.Operacion === 'Despacho' || m.Operacion === 'Merma') {
+                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
+                } else if (m.Operacion === 'Traslado') {
+                    stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
+                    if (ubicacionDestino && ubicacionDestino !== 'Merma666') {
+                        stockPorUbicacion[ubicacionDestino] = (stockPorUbicacion[ubicacionDestino] || 0) + cant;
+                    }
+                }
+            });
+            return stockPorUbicacion;
+        }
+
         // Rellena el selector de ubicaciones para Despacho: todas las ubicaciones con stock
-        // disponible para ese SKU, más la opción fija "No encontrado" al final.
+        // disponible para ese SKU. Todo producto tiene ubicación, así que ya NO existe la
+        // opción "No encontrado" — si no hay ninguna ubicación con stock, se avisa para
+        // corregir el inventario en vez de permitir un registro sin ubicación real.
         function actualizarUbicacionesDespacho(sku) {
             const selector = document.getElementById('ubicacionDespacho');
             if (!selector) return;
 
             const stockPorUbicacion = calcularStockPorUbicacion(sku);
-            selector.innerHTML = '<option value="">Selecciona una ubicación...</option>';
-            Object.entries(stockPorUbicacion)
+            const ubicacionesConStock = Object.entries(stockPorUbicacion)
                 .filter(([ubicacion, stock]) => ubicacion !== 'Sin ubicación' && stock > 0)
-                .sort(([ubicacionA], [ubicacionB]) => ubicacionA.localeCompare(ubicacionB))
-                .forEach(([ubicacion, stock]) => {
-                    selector.insertAdjacentHTML('beforeend', `<option value="${ubicacion}">${ubicacion} (${stock} disponibles)</option>`);
-                });
-            selector.insertAdjacentHTML('beforeend', '<option value="No encontrado">No encontrado</option>');
+                .sort(([ubicacionA], [ubicacionB]) => ubicacionA.localeCompare(ubicacionB));
+
+            selector.innerHTML = '<option value="">Selecciona una ubicación...</option>';
+            ubicacionesConStock.forEach(([ubicacion, stock]) => {
+                selector.insertAdjacentHTML('beforeend', `<option value="${ubicacion}">${ubicacion} (${stock} disponibles)</option>`);
+            });
+            if (ubicacionesConStock.length === 0) {
+                selector.insertAdjacentHTML('beforeend', '<option value="" disabled>⚠️ Sin ubicación con stock registrado — corrige el inventario</option>');
+            }
             selector.value = '';
             resetearCampoCantidad();
         }
@@ -896,18 +1027,12 @@
             inputCantidad.min = 1;
         }
 
-        // Cuando en Despacho se elige "No encontrado", la cantidad se fuerza a 0
-        // porque significa que el producto no fue encontrado en ninguna ubicación.
+        // Todo producto tiene ubicación: ya no existe la opción "No encontrado", así que
+        // cualquier ubicación elegida aquí es una ubicación real con stock disponible.
         window.manejarCambioUbicacionDespacho = function(selectEl) {
             const inputCantidad = document.getElementById('cantidad');
-            if (selectEl.value === 'No encontrado') {
-                inputCantidad.value = 0;
-                inputCantidad.min = 0;
-                inputCantidad.readOnly = true;
-            } else {
-                resetearCampoCantidad();
-                if (inputCantidad.value === '0') inputCantidad.value = '';
-            }
+            resetearCampoCantidad();
+            if (inputCantidad.value === '0') inputCantidad.value = '';
         };
 
         window.setTipoOperacion = function(tipo, element) {
@@ -1034,9 +1159,16 @@
 
             let htmlResultado = `<strong>Producto:</strong> ${nombreProdEncontrado || query.toUpperCase()}<br><br><strong>Ubicaciones y Stock Actual:</strong><ul>`;
             let hayAlMenosUna = false;
+            let hayUbicacionInvalida = false;
 
             for (const [ubi, stock] of Object.entries(stockPorUbicacion)) {
                 if (stock !== 0) {
+                    // "No encontrado" no es una ubicación real (viene de registros antiguos);
+                    // no se muestra como si fuera una ubicación del almacén.
+                    if (ubi === 'No encontrado') {
+                        hayUbicacionInvalida = true;
+                        continue;
+                    }
                     hayAlMenosUna = true;
                     htmlResultado += `<li>Ubicación <strong>${ubi}</strong>: <strong>${stock} unidades</strong></li>`;
                 }
@@ -1046,6 +1178,10 @@
                 htmlResultado += `<li><em>No hay stock disponible registrado en ninguna ubicación para este producto.</em></li>`;
             }
             htmlResultado += `</ul>`;
+
+            if (hayUbicacionInvalida) {
+                htmlResultado += `<p style="color:#ef5350; font-size:12px; margin-top:6px;">⚠️ Hay movimientos antiguos de este producto registrados sin ubicación válida ("No encontrado"). Corrígelos desde el historial con el ícono ✏️ (Editar Ubicación).</p>`;
+            }
 
             boxRes.style.display = 'block';
             boxRes.innerHTML = htmlResultado;
@@ -1187,6 +1323,7 @@
             const workbook = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(workbook, worksheet, "Movimientos_Kardex");
             XLSX.writeFile(workbook, "Movimientos_Minna_SAC.xlsx");
+            if (typeof window.marcarReporteDescargadoHoy === 'function') window.marcarReporteDescargadoHoy('movimientos');
         };
 
         // ---- Cruce de Inventario: Sistema (Excel cargado) vs. Físico (movimientos registrados en la app) ----
@@ -1308,6 +1445,7 @@
             XLSX.utils.book_append_sheet(workbook, hojaKpiSheet, "KPI ERI");
 
             XLSX.writeFile(workbook, "Inventario_ERI_Minna_SAC.xlsx");
+            if (typeof window.marcarReporteDescargadoHoy === 'function') window.marcarReporteDescargadoHoy('inventario');
         };
 
         // ---- Utilidades para reportes de Picking del día ----
@@ -1444,6 +1582,7 @@
 
             const hoyStr = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
             XLSX.writeFile(workbook, `Picking_Hoy_${hoyStr}.xlsx`);
+            if (typeof window.marcarReporteDescargadoHoy === 'function') window.marcarReporteDescargadoHoy('picking');
         };
 
         // Excel con la plantilla exacta para hacer la guía: Cantidad, Código de Barras/SKU/N° Serie, Impuesto (IVA), Costo Neto Glosa
@@ -1515,17 +1654,320 @@
                     ${tdCausaHtml}
                     <td><strong>${mov.Cantidad}</strong></td>
                     <td>${mov.Responsable}</td>
-                    <td><button class="btn-delete" onclick="window.solicitarEliminacion('${mov.id}')" title="Eliminar registro">🗑️</button></td>
+                    <td>
+                        <button class="btn-edit" onclick="window.solicitarEdicionUbicacion('${mov.id}')" title="Editar ubicación">✏️</button>
+                        <button class="btn-delete" onclick="window.solicitarEliminacion('${mov.id}')" title="Eliminar registro">🗑️</button>
+                    </td>
                 </tr>`;
                 tbody.insertAdjacentHTML('beforeend', row);
             });
+
+            if (typeof window.actualizarColoresLayout3D === 'function') {
+                window.actualizarColoresLayout3D();
+            }
         };
+
+        // =====================================================================
+        // ---- LAYOUT 3D DEL ALMACÉN (9 andamios A-I, 5 niveles, 4 posiciones) ----
+        // El andamio G tiene solo 3 posiciones por nivel. Cada caja representa una
+        // ubicación exacta (ej. "A-01-01") y se colorea según el stock que hay ahí:
+        // rojo si algún código tiene 10 o menos, verde si todos están arriba de 30,
+        // amarillo en cualquier otro caso, y gris si no hay stock registrado.
+        // =====================================================================
+        (function () {
+            const NIVELES_3D = 5;
+            // Distribución aproximada del piso del almacén (ver imagen de referencia):
+            // D es una fila horizontal arriba; E-F-G forman un pasillo vertical contiguo
+            // (G con solo 3 posiciones); H sale horizontal desde el final de G; C-B forman
+            // otro pasillo vertical a la izquierda; A continúa debajo de G; I es una
+            // columna aislada a la derecha.
+            const RACKS_3D = [
+                { id: 'D', orientacion: 'x', origenX: 1, origenZ: 0, posiciones: 4 },
+                { id: 'E', orientacion: 'z', origenX: 6, origenZ: 0, posiciones: 4 },
+                { id: 'F', orientacion: 'z', origenX: 6, origenZ: 4, posiciones: 4 },
+                { id: 'G', orientacion: 'z', origenX: 6, origenZ: 8, posiciones: 3 },
+                { id: 'H', orientacion: 'x', origenX: 7, origenZ: 10, posiciones: 4 },
+                { id: 'C', orientacion: 'z', origenX: 0, origenZ: 4, posiciones: 4 },
+                { id: 'B', orientacion: 'z', origenX: 0, origenZ: 8, posiciones: 4 },
+                { id: 'A', orientacion: 'z', origenX: 6, origenZ: 12, posiciones: 4 },
+                { id: 'I', orientacion: 'z', origenX: 15, origenZ: 8, posiciones: 4 }
+            ];
+            const ZONAS_3D = [
+                { texto: 'ZONA DE DESPACHO', x: 0, z: 2, ancho: 1.4, profundo: 3.4, color: 0xffffff },
+                { texto: 'ZONA DE PREPARACIÓN', x: 12, z: 9, ancho: 3.4, profundo: 1.4, color: 0xffffff },
+                { texto: 'MERMA666', x: 15.3, z: 9, ancho: 1.4, profundo: 3.4, color: 0xfff3e0 }
+            ];
+            const SPACING = 1.0;
+            const CAJA = 0.82;
+            const ALTURA_NIVEL = 0.55;
+            const GAP_NIVEL = 0.06;
+
+            function pad2(n) { return String(n).padStart(2, '0'); }
+
+            // Genera cada ubicación exacta (código + coordenadas de mundo) de todos los andamios
+            function generarUbicaciones3D() {
+                const lista = [];
+                RACKS_3D.forEach(rack => {
+                    for (let pos = 1; pos <= rack.posiciones; pos++) {
+                        const gx = rack.orientacion === 'x' ? rack.origenX + (pos - 1) : rack.origenX;
+                        const gz = rack.orientacion === 'z' ? rack.origenZ + (pos - 1) : rack.origenZ;
+                        for (let nivel = 1; nivel <= NIVELES_3D; nivel++) {
+                            lista.push({
+                                codigo: `${rack.id}-${pad2(nivel)}-${pad2(pos)}`,
+                                andamio: rack.id,
+                                nivel, posicion: pos,
+                                worldX: gx * SPACING,
+                                worldZ: gz * SPACING,
+                                worldY: (nivel - 1) * (ALTURA_NIVEL + GAP_NIVEL) + ALTURA_NIVEL / 2
+                            });
+                        }
+                    }
+                });
+                return lista;
+            }
+
+            // Calcula, para UNA ubicación exacta, el stock por SKU (a partir del historial de movimientos)
+            function calcularInventarioPorUbicacionExacta(codigo) {
+                const porSku = {};
+                historialArray.forEach(m => {
+                    const sku = (m.SKU || '').trim();
+                    if (!sku) return;
+                    const cant = parseInt(m.Cantidad) || 0;
+
+                    if ((m.Ubicacion || '') === codigo) {
+                        if (!porSku[sku]) porSku[sku] = { cantidad: 0, producto: m.Producto || '' };
+                        if (m.Operacion === 'Recepción') porSku[sku].cantidad += cant;
+                        else if (m.Operacion === 'Despacho' || m.Operacion === 'Merma' || m.Operacion === 'Traslado') porSku[sku].cantidad -= cant;
+                        if (m.Producto) porSku[sku].producto = m.Producto;
+                    }
+                    if (m.Operacion === 'Traslado' && (m.Ubicacion_Traslado || '') === codigo && codigo !== 'Merma666') {
+                        if (!porSku[sku]) porSku[sku] = { cantidad: 0, producto: m.Producto || '' };
+                        porSku[sku].cantidad += cant;
+                        if (m.Producto) porSku[sku].producto = m.Producto;
+                    }
+                });
+                return Object.entries(porSku)
+                    .map(([sku, d]) => ({ sku, producto: d.producto, cantidad: d.cantidad }))
+                    .filter(it => it.cantidad !== 0)
+                    .sort((a, b) => a.cantidad - b.cantidad);
+            }
+
+            // Clasifica el color de una ubicación según las cantidades que tiene
+            function evaluarUbicacion3D(codigo) {
+                const items = calcularInventarioPorUbicacionExacta(codigo);
+                if (items.length === 0) return { color: 0xe0e0e0, estado: 'vacia', items };
+                const minCant = Math.min(...items.map(i => i.cantidad));
+                if (minCant <= 10) return { color: 0xef5350, estado: 'roja', items };
+                if (minCant > 30) return { color: 0x66bb6a, estado: 'verde', items };
+                return { color: 0xffca28, estado: 'amarilla', items };
+            }
+
+            let scene, camera, renderer, raycaster;
+            let cajasMeshes = [];
+            let contenedor;
+            let radio = 16, theta = Math.PI / 4, phi = Math.PI / 3.1;
+            const objetivo = new THREE.Vector3(7, 1.2, 6);
+            let arrastrando = false, ultimoX = 0, ultimoY = 0, distanciaArrastre = 0;
+
+            function actualizarCamara() {
+                const y = radio * Math.cos(phi);
+                const radioXZ = radio * Math.sin(phi);
+                camera.position.set(
+                    objetivo.x + radioXZ * Math.sin(theta),
+                    objetivo.y + y,
+                    objetivo.z + radioXZ * Math.cos(theta)
+                );
+                camera.lookAt(objetivo);
+            }
+
+            function crearEtiqueta(texto, colorTexto) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 256; canvas.height = 64;
+                const ctx = canvas.getContext('2d');
+                ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = colorTexto || '#5e35b1';
+                ctx.font = 'bold 40px Segoe UI, Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(texto, canvas.width / 2, canvas.height / 2);
+                const tex = new THREE.CanvasTexture(canvas);
+                const mat = new THREE.SpriteMaterial({ map: tex, depthTest: false });
+                const sprite = new THREE.Sprite(mat);
+                sprite.scale.set(1.6, 0.4, 1);
+                return sprite;
+            }
+
+            function initLayout3D() {
+                contenedor = document.getElementById('contenedorLayout3D');
+                const hint = document.getElementById('layout3dHint');
+                if (!contenedor || typeof THREE === 'undefined') {
+                    if (hint) hint.innerText = 'No se pudo cargar el motor 3D (revisa tu conexión).';
+                    return;
+                }
+
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0xeceff1);
+
+                camera = new THREE.PerspectiveCamera(45, contenedor.clientWidth / contenedor.clientHeight, 0.1, 100);
+                actualizarCamara();
+
+                renderer = new THREE.WebGLRenderer({ antialias: true });
+                renderer.setSize(contenedor.clientWidth, contenedor.clientHeight);
+                renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+                contenedor.appendChild(renderer.domElement);
+
+                scene.add(new THREE.AmbientLight(0xffffff, 0.75));
+                const dirLight = new THREE.DirectionalLight(0xffffff, 0.65);
+                dirLight.position.set(10, 20, 10);
+                scene.add(dirLight);
+
+                // Piso
+                const piso = new THREE.Mesh(
+                    new THREE.PlaneGeometry(24, 20),
+                    new THREE.MeshStandardMaterial({ color: 0xf5f5f5 })
+                );
+                piso.rotation.x = -Math.PI / 2;
+                piso.position.set(7.5, -0.02, 7.5);
+                scene.add(piso);
+
+                // Zonas de piso (Despacho / Preparación / Merma666) como placas + etiqueta
+                ZONAS_3D.forEach(zona => {
+                    const placa = new THREE.Mesh(
+                        new THREE.BoxGeometry(zona.ancho, 0.04, zona.profundo),
+                        new THREE.MeshStandardMaterial({ color: zona.color })
+                    );
+                    placa.position.set(zona.x, 0.02, zona.z);
+                    scene.add(placa);
+                    const etiqueta = crearEtiqueta(zona.texto, '#5e35b1');
+                    etiqueta.position.set(zona.x, 0.5, zona.z);
+                    scene.add(etiqueta);
+                });
+
+                // Cajas de cada ubicación (todas las posiciones x niveles de los 9 andamios)
+                const ubicaciones = generarUbicaciones3D();
+                const geometriaCaja = new THREE.BoxGeometry(CAJA, ALTURA_NIVEL, CAJA);
+                ubicaciones.forEach(ubi => {
+                    const evaluacion = evaluarUbicacion3D(ubi.codigo);
+                    const material = new THREE.MeshStandardMaterial({ color: evaluacion.color });
+                    const caja = new THREE.Mesh(geometriaCaja, material);
+                    caja.position.set(ubi.worldX, ubi.worldY, ubi.worldZ);
+                    caja.userData = { codigo: ubi.codigo };
+                    scene.add(caja);
+                    cajasMeshes.push(caja);
+                });
+
+                // Etiquetas con la letra de cada andamio, sobre su primera posición
+                RACKS_3D.forEach(rack => {
+                    const etiqueta = crearEtiqueta(rack.id, '#ab47bc');
+                    etiqueta.position.set(rack.origenX * SPACING, NIVELES_3D * (ALTURA_NIVEL + GAP_NIVEL) + 0.35, rack.origenZ * SPACING);
+                    scene.add(etiqueta);
+                });
+
+                raycaster = new THREE.Raycaster();
+
+                // ---- Controles manuales: arrastrar para rotar, rueda/pellizco para zoom ----
+                contenedor.addEventListener('pointerdown', (e) => {
+                    arrastrando = true;
+                    distanciaArrastre = 0;
+                    ultimoX = e.clientX; ultimoY = e.clientY;
+                });
+                window.addEventListener('pointerup', (e) => {
+                    if (arrastrando && distanciaArrastre < 6) {
+                        manejarClickLayout3D(e);
+                    }
+                    arrastrando = false;
+                });
+                window.addEventListener('pointermove', (e) => {
+                    if (!arrastrando) return;
+                    const dx = e.clientX - ultimoX;
+                    const dy = e.clientY - ultimoY;
+                    distanciaArrastre += Math.abs(dx) + Math.abs(dy);
+                    theta -= dx * 0.008;
+                    phi = Math.min(Math.max(phi - dy * 0.008, 0.2), Math.PI / 2.05);
+                    ultimoX = e.clientX; ultimoY = e.clientY;
+                    actualizarCamara();
+                });
+                contenedor.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    radio = Math.min(Math.max(radio + e.deltaY * 0.02, 6), 30);
+                    actualizarCamara();
+                }, { passive: false });
+
+                window.addEventListener('resize', () => {
+                    if (!contenedor || !renderer || !camera) return;
+                    camera.aspect = contenedor.clientWidth / contenedor.clientHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(contenedor.clientWidth, contenedor.clientHeight);
+                });
+
+                if (hint) hint.innerText = 'Arrastra para rotar · rueda/pellizca para zoom · toca una caja para ver el detalle';
+
+                function animar() {
+                    requestAnimationFrame(animar);
+                    renderer.render(scene, camera);
+                }
+                animar();
+            }
+
+            function manejarClickLayout3D(e) {
+                if (!renderer || !camera || !raycaster) return;
+                const rect = renderer.domElement.getBoundingClientRect();
+                if (e.clientX < rect.left || e.clientX > rect.right || e.clientY < rect.top || e.clientY > rect.bottom) return;
+                const mouse = new THREE.Vector2(
+                    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+                    -((e.clientY - rect.top) / rect.height) * 2 + 1
+                );
+                raycaster.setFromCamera(mouse, camera);
+                const intersecciones = raycaster.intersectObjects(cajasMeshes);
+                if (intersecciones.length > 0) {
+                    const codigo = intersecciones[0].object.userData.codigo;
+                    window.abrirDetalleUbicacion3D(codigo);
+                }
+            }
+
+            // Recolorea todas las cajas según el stock actual (se llama cada vez que llega historial nuevo)
+            window.actualizarColoresLayout3D = function () {
+                if (!cajasMeshes.length) return;
+                cajasMeshes.forEach(caja => {
+                    const evaluacion = evaluarUbicacion3D(caja.userData.codigo);
+                    caja.material.color.setHex(evaluacion.color);
+                });
+            };
+
+            window.abrirDetalleUbicacion3D = function (codigo) {
+                const evaluacion = evaluarUbicacion3D(codigo);
+                document.getElementById('tituloDetalleUbicacion3D').innerText = `📍 Ubicación ${codigo}`;
+                const contenido = document.getElementById('contenidoDetalleUbicacion3D');
+                if (evaluacion.items.length === 0) {
+                    contenido.innerHTML = '<p style="font-size:13px; color:#78909c;">Esta ubicación no tiene stock registrado.</p>';
+                } else {
+                    contenido.innerHTML = evaluacion.items.map(it =>
+                        `<div class="detalle3d-item ${evaluacion.estado}">
+                            <span><b>${it.sku}</b><br>${it.producto || 'Sin nombre'}</span>
+                            <span><b>${it.cantidad}</b> und.</span>
+                        </div>`
+                    ).join('');
+                }
+                document.getElementById('modalDetalleUbicacion3D').style.display = 'flex';
+            };
+
+            window.cerrarDetalleUbicacion3D = function () {
+                document.getElementById('modalDetalleUbicacion3D').style.display = 'none';
+            };
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initLayout3D);
+            } else {
+                initLayout3D();
+            }
+        })();
     </script>
 
     <!-- Firebase -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, deleteDoc, doc, setDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, setDoc, getDoc, updateDoc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDKEWqcxKax47LMctLzViN2nZMYQJGCQ",
@@ -1551,36 +1993,24 @@
             }
         });
 
-        // ---- Excel Maestro: debe cargarse a diario, pero basta con que UNA persona lo cargue ----
-        // (a diferencia del Excel de Picking, que sí debe cargar cada quien en su equipo).
-        // Se guarda un solo documento compartido en la nube con la fecha del último Maestro cargado;
-        // así, si ya lo cargó cualquiera del equipo hoy, no se le vuelve a avisar a nadie más.
+        // ---- Excel Maestro: ahora se carga al FINAL del día (plan de 9pm) para sincerar ----
+        // el inventario, no al iniciar la app. Solo se informa cuándo fue la última carga;
+        // ya no se exige ni se interrumpe al equipo con una alerta al abrir la app.
         const refEstadoMaestro = doc(db, "config", "estadoMaestro");
-        let alertaMaestroYaMostrada = false;
 
         onSnapshot(refEstadoMaestro, (snap) => {
             const hoy = new Date().toLocaleDateString('es-PE');
             const data = snap.exists() ? snap.data() : null;
             const cargadoHoy = !!(data && data.fecha === hoy);
             const banner = document.getElementById('alertaMaestroDiario');
+            if (!banner) return;
 
-            if (banner) {
-                if (cargadoHoy) {
-                    banner.style.display = 'none';
-                } else {
-                    banner.style.display = 'block';
-                    banner.innerText = `⚠️ Aún nadie ha cargado el Excel Maestro hoy (${hoy}). Cárgalo antes de operar.`;
-                }
-            }
-
-            if (!cargadoHoy && !alertaMaestroYaMostrada) {
-                alertaMaestroYaMostrada = true;
-                setTimeout(() => {
-                    alert(`⚠️ El Excel Maestro debe cargarse hoy (${hoy}). Todavía nadie del equipo lo ha cargado.`);
-                }, 400);
-            }
             if (cargadoHoy) {
-                alertaMaestroYaMostrada = true; // evita que salga el alert si más tarde se pierde la conexión un momento
+                banner.style.display = 'block';
+                banner.style.color = '#66bb6a';
+                banner.innerText = `✅ Excel Maestro ya cargado hoy (${hoy}) por ${data.cargadoPor || 'alguien del equipo'}.`;
+            } else {
+                banner.style.display = 'none';
             }
         });
 
@@ -1596,6 +2026,48 @@
                 console.error('No se pudo guardar el estado del Excel Maestro:', error);
             }
         };
+
+        // ---- Recordatorio de los 3 reportes de cierre: Inventario (ERI), Movimientos y Picking ----
+        // El plan es cargar el Excel Maestro al final del día (9pm) para sincerar, y descargar
+        // estos 3 reportes. Si ayer no se descargaron los 3, se avisa una vez al abrir la app
+        // (en vez de exigir subir el Excel al iniciar).
+        const refEstadoReportes = doc(db, "config", "estadoReportes");
+
+        window.marcarReporteDescargadoHoy = async function(tipo) {
+            const hoy = new Date().toLocaleDateString('es-PE');
+            try {
+                await setDoc(refEstadoReportes, {
+                    [`fecha_${tipo}`]: hoy,
+                    [`por_${tipo}`]: responsableActual || 'Desconocido'
+                }, { merge: true });
+            } catch (error) {
+                console.error('No se pudo guardar el estado del reporte ' + tipo + ':', error);
+            }
+        };
+
+        (async function revisarReportesDeAyer() {
+            try {
+                const snap = await getDoc(refEstadoReportes);
+                const data = snap.exists() ? snap.data() : {};
+
+                const ayer = new Date();
+                ayer.setDate(ayer.getDate() - 1);
+                const ayerStr = ayer.toLocaleDateString('es-PE');
+
+                const faltantes = [];
+                if (data.fecha_inventario !== ayerStr) faltantes.push('Inventario (ERI)');
+                if (data.fecha_movimientos !== ayerStr) faltantes.push('Movimientos');
+                if (data.fecha_picking !== ayerStr) faltantes.push('Picking');
+
+                if (faltantes.length > 0) {
+                    setTimeout(() => {
+                        alert(`⚠️ Ayer (${ayerStr}) no se descargaron todos los reportes de cierre: ${faltantes.join(', ')}.\n\nRecuerda: al final del día (plan de 9pm) hay que cargar el Excel Maestro para sincerar y descargar los 3 reportes importantes — Inventario, Movimientos y Picking.`);
+                    }, 400);
+                }
+            } catch (error) {
+                console.error('No se pudo revisar el estado de los reportes de ayer:', error);
+            }
+        })();
 
         // ---- Aceptar tarea de la Consola de Picking (Estilo RF) ----
         window.aceptarTareaPicking = async function() {
@@ -1626,6 +2098,14 @@
             }
 
             const sugerencia = buscarUbicacionSugerida(tarea.barcode);
+
+            // Todo producto tiene ubicación: si no se encontró ninguna con stock, no se
+            // registra el despacho. Se debe corregir el inventario o saltar la tarea.
+            if (!sugerencia.ubicacion) {
+                alert('⚠️ Este producto no tiene ninguna ubicación con stock registrado. Todo producto tiene ubicación: corrige el inventario antes de continuar, o usa "Saltar Tarea".');
+                return;
+            }
+
             const itemMaestro = maestroSkuDb[tarea.barcode.trim()] || {};
 
             const movimiento = {
@@ -1674,6 +2154,14 @@
             const ubicacionVal = tipoOp === 'Despacho'
                 ? document.getElementById('ubicacionDespacho').value
                 : document.getElementById('ubicacion').value;
+
+            // Todo producto tiene ubicación: nunca se registra un movimiento sin una
+            // ubicación real seleccionada (o con la antigua opción "No encontrado").
+            if (!ubicacionVal || ubicacionVal === 'No encontrado') {
+                alert('⚠️ No se puede registrar sin una ubicación válida. Todo producto tiene ubicación: verifica el stock por ubicación o corrige el inventario antes de continuar.');
+                return;
+            }
+
             const ubicacionTrasladoVal = (tipoOp === 'Traslado' || tipoOp === 'Merma') ? document.getElementById('ubicacionTraslado').value : '';
             const sucursalVal = tipoOp === 'Despacho' ? document.getElementById('sucursalDespacho').value.trim() : '';
             const causaVal = tipoOp === 'Merma' ? document.getElementById('causaMerma').value : '';
@@ -1734,6 +2222,81 @@
                 }
             } else {
                 alert("❌ PIN incorrecto. No se pudo eliminar el registro.");
+            }
+        };
+
+        // ---- Editar la Ubicación de un registro ya guardado (protegido con PIN) ----
+        // Útil para corregir registros viejos que, por una falla, quedaron como "No encontrado".
+        window.solicitarEdicionUbicacion = function(idDoc) {
+            const pinIngresado = prompt("🔒 Ingresa el PIN para editar la ubicación de este registro:");
+            if (pinIngresado === null) return;
+
+            const PIN_EDITAR_UBICACION = "RUTH";
+            if (pinIngresado.trim().toUpperCase() !== PIN_EDITAR_UBICACION) {
+                alert("❌ PIN incorrecto. No se pudo editar el registro.");
+                return;
+            }
+
+            const mov = historialArray.find(m => m.id === idDoc);
+            if (!mov) {
+                alert("No se encontró el registro.");
+                return;
+            }
+
+            docEnEdicion = idDoc;
+            document.getElementById('editarUbicacionInfo').innerHTML =
+                `<strong>${mov.Producto || mov.SKU || mov.Barcode || 'Producto'}</strong><br>Ubicación actual: <strong>${mov.Ubicacion || 'Sin ubicación'}</strong>`;
+
+            // Desglose de ubicaciones disponibles para este producto, calculado del historial.
+            // Se busca por SKU, código de barras O nombre de producto (lo que coincida),
+            // para encontrar las ubicaciones reales aunque el SKU de este registro viejo
+            // haya quedado mal guardado (por eso salió como "No encontrado" en su momento).
+            const selector = document.getElementById('selectEditarUbicacion');
+            selector.innerHTML = '<option value="">Selecciona una ubicación...</option>';
+            const stockPorUbicacion = calcularStockPorUbicacionAmplio({
+                sku: mov.SKU,
+                barcode: mov.Barcode,
+                producto: mov.Producto
+            });
+            Object.entries(stockPorUbicacion)
+                .filter(([ubi, stock]) => ubi && ubi !== 'Sin ubicación')
+                .sort(([a], [b]) => a.localeCompare(b))
+                .forEach(([ubi, stock]) => {
+                    selector.insertAdjacentHTML('beforeend', `<option value="${ubi}">${ubi} (${stock} disponibles)</option>`);
+                });
+
+            // Si la ubicación actual del registro (ej. "No encontrado") no está en el desglose, se agrega igual como referencia.
+            if (mov.Ubicacion && !stockPorUbicacion.hasOwnProperty(mov.Ubicacion)) {
+                selector.insertAdjacentHTML('beforeend', `<option value="${mov.Ubicacion}">${mov.Ubicacion} (actual)</option>`);
+            }
+
+            document.getElementById('inputEditarUbicacionManual').value = '';
+            document.getElementById('modalEditarUbicacion').style.display = 'flex';
+        };
+
+        window.cerrarModalEditarUbicacion = function() {
+            document.getElementById('modalEditarUbicacion').style.display = 'none';
+            docEnEdicion = '';
+        };
+
+        window.confirmarEdicionUbicacion = async function() {
+            if (!docEnEdicion) return;
+
+            const selector = document.getElementById('selectEditarUbicacion');
+            const manual = document.getElementById('inputEditarUbicacionManual').value.trim();
+            const nuevaUbicacion = manual || selector.value;
+
+            if (!nuevaUbicacion) {
+                alert('Selecciona o escribe una ubicación válida.');
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, "movimientos", docEnEdicion), { Ubicacion: nuevaUbicacion });
+                alert('✅ Ubicación actualizada correctamente.');
+                window.cerrarModalEditarUbicacion();
+            } catch (error) {
+                alert('Error al actualizar la ubicación: ' + error.message);
             }
         };
     </script>
