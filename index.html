@@ -1123,6 +1123,14 @@
                     window.marcarMaestroCargadoHoy();
                 }
 
+                // Si quien carga el Excel Maestro es Nils, además de guardarlo en este
+                // dispositivo se sube a la nube para que se actualice automáticamente
+                // en los equipos de todo el resto del equipo (a diferencia del Excel de
+                // Picking, que sí es solo local por dispositivo).
+                if ((responsableActual || '').trim().toLowerCase() === 'nils' && typeof window.compartirMaestroConEquipo === 'function') {
+                    window.compartirMaestroConEquipo(maestroSkuDb, stockSistemaDb, responsableActual);
+                }
+
                 // Si ya había una tarea de picking en pantalla, recalcula su ubicación sugerida con el maestro recién cargado.
                 if (typeof renderizarTareaPickingActual === 'function') {
                     renderizarTareaPickingActual();
@@ -1133,6 +1141,29 @@
                 }
             };
             reader.readAsArrayBuffer(file);
+        };
+
+        // Aplica en este dispositivo el Excel Maestro que Nils compartió desde la nube
+        // (llamado desde el bloque de Firebase cuando llega una actualización).
+        window.aplicarMaestroCompartido = function(nuevoMaestroDb, nuevoStockDb, actualizadoPor) {
+            maestroSkuDb = nuevoMaestroDb || {};
+            stockSistemaDb = nuevoStockDb || {};
+            localStorage.setItem('minna_maestro_db', JSON.stringify(maestroSkuDb));
+            localStorage.setItem('minna_stock_sistema_db', JSON.stringify(stockSistemaDb));
+
+            const totalProds = Object.keys(maestroSkuDb).length;
+            const status = document.getElementById('statusMaestro');
+            if (status) {
+                status.innerText = `Maestro actualizado por ${actualizadoPor || 'el equipo'} (${totalProds} productos)`;
+                status.style.color = '#2e7d32';
+            }
+
+            if (typeof renderizarTareaPickingActual === 'function') {
+                renderizarTareaPickingActual();
+            }
+            if (typeof window.actualizarDashboard === 'function') {
+                window.actualizarDashboard();
+            }
         };
 
         // ---- Consola de Picking por Tareas (Estilo RF) ----
@@ -1344,7 +1375,7 @@
                     stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
                 } else if (m.Operacion === 'Traslado') {
                     stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
-                    if (ubicacionDestino && ubicacionDestino !== 'Merma666') {
+                    if (ubicacionDestino && ubicacionDestino !== 'Merma') {
                         stockPorUbicacion[ubicacionDestino] = (stockPorUbicacion[ubicacionDestino] || 0) + cant;
                     }
                 }
@@ -1383,7 +1414,7 @@
                     stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
                 } else if (m.Operacion === 'Traslado') {
                     stockPorUbicacion[ubicacionOrigen] = (stockPorUbicacion[ubicacionOrigen] || 0) - cant;
-                    if (ubicacionDestino && ubicacionDestino !== 'Merma666') {
+                    if (ubicacionDestino && ubicacionDestino !== 'Merma') {
                         stockPorUbicacion[ubicacionDestino] = (stockPorUbicacion[ubicacionDestino] || 0) + cant;
                     }
                 }
@@ -1505,7 +1536,7 @@
                 inputSucursal.required = false;
                 grupoTraslado.style.display = 'block';
                 inputTraslado.readOnly = true;
-                inputTraslado.value = 'Merma666';
+                inputTraslado.value = 'Merma';
                 grupoCausa.style.display = 'block';
                 selectCausa.required = true;
                 resetearCampoCantidad();
@@ -1569,7 +1600,7 @@
                         }
                     }
 
-                    if (ubiTraslado && ubiTraslado !== 'Merma666') {
+                    if (ubiTraslado && ubiTraslado !== 'Merma') {
                         if (!stockPorUbicacion[ubiTraslado]) stockPorUbicacion[ubiTraslado] = 0;
                         if (op === 'Traslado') {
                             stockPorUbicacion[ubiTraslado] += cant;
@@ -1874,17 +1905,43 @@
             return { faltantes, sobrantes, valorTotalSistema, valorTotalFaltantes, valorTotalSobrantes, valorTotalDiferencias, eri };
         }
 
-        // Calcula el valor monetario acumulado (histórico, no solo hoy) de TODAS las
-        // mermas registradas, usando el costo unitario del Stock Sistema por SKU.
-        function calcularMermaValorizadaTotal() {
-            let total = 0;
+        // Calcula el stock físico neto por SKU que hay en UNA ubicación exacta, a partir de
+        // todo el historial de movimientos (Recepción suma, Despacho/Merma restan en su
+        // ubicación, Traslado resta en el origen y suma en el destino). Sirve tanto para
+        // ubicaciones normales (A-01-01) como para la zona "Merma".
+        function calcularStockNetoPorUbicacionExacta(codigoUbicacion) {
+            const stockPorSku = {};
             historialArray.forEach(m => {
-                if (m.Operacion !== 'Merma') return;
                 const sku = (m.SKU || '').trim();
                 if (!sku) return;
                 const cant = parseNumeroSeguro(m.Cantidad);
+                if (!stockPorSku[sku]) stockPorSku[sku] = 0;
+
+                if ((m.Ubicacion || '') === codigoUbicacion) {
+                    if (m.Operacion === 'Recepción') {
+                        stockPorSku[sku] += cant;
+                    } else if (m.Operacion === 'Despacho' || m.Operacion === 'Merma' || m.Operacion === 'Traslado') {
+                        stockPorSku[sku] -= cant;
+                    }
+                }
+                if (m.Operacion === 'Traslado' && (m.Ubicacion_Traslado || '') === codigoUbicacion) {
+                    stockPorSku[sku] += cant;
+                }
+            });
+            return stockPorSku;
+        }
+
+        // Calcula el valor monetario de todo lo que hoy está físicamente en la ubicación
+        // "Merma" (sin importar si llegó ahí por Recepción, Merma o Traslado), usando el
+        // costo unitario del Stock Sistema por SKU — igual que se valoriza el inventario.
+        function calcularMermaValorizadaTotal() {
+            let total = 0;
+            const stockEnMerma = calcularStockNetoPorUbicacionExacta('Merma');
+            Object.keys(stockEnMerma).forEach(sku => {
+                const cantidad = stockEnMerma[sku];
+                if (cantidad <= 0) return;
                 const costoUnitario = (stockSistemaDb[sku] && stockSistemaDb[sku].costoUnitario) || 0;
-                total += cant * costoUnitario;
+                total += cantidad * costoUnitario;
             });
             return total;
         }
@@ -2251,7 +2308,7 @@
                         else if (m.Operacion === 'Despacho' || m.Operacion === 'Merma' || m.Operacion === 'Traslado') porSku[sku].cantidad -= cant;
                         if (m.Producto) porSku[sku].producto = m.Producto;
                     }
-                    if (m.Operacion === 'Traslado' && (m.Ubicacion_Traslado || '') === codigo && codigo !== 'Merma666') {
+                    if (m.Operacion === 'Traslado' && (m.Ubicacion_Traslado || '') === codigo && codigo !== 'Merma') {
                         if (!porSku[sku]) porSku[sku] = { cantidad: 0, producto: m.Producto || '' };
                         porSku[sku].cantidad += cant;
                         if (m.Producto) porSku[sku].producto = m.Producto;
@@ -2554,6 +2611,37 @@
                 console.error('No se pudo guardar el estado del Excel Maestro:', error);
             }
         };
+
+        // ---- Excel Maestro compartido: cuando el responsable es Nils, el Excel Maestro
+        // que carga (con Stock y Costo del sistema) se sube también a la nube, para que
+        // se actualice automáticamente en los dispositivos de todo el equipo. ----
+        const refMaestroCompartido = doc(db, "config", "maestroCompartido");
+
+        window.compartirMaestroConEquipo = async function(maestroDb, stockDb, actualizadoPor) {
+            try {
+                await setDoc(refMaestroCompartido, {
+                    maestroSkuDb: JSON.stringify(maestroDb || {}),
+                    stockSistemaDb: JSON.stringify(stockDb || {}),
+                    actualizadoPor: actualizadoPor || 'Nils',
+                    timestamp: Date.now()
+                });
+            } catch (error) {
+                console.error('No se pudo compartir el Excel Maestro con el equipo:', error);
+            }
+        };
+
+        onSnapshot(refMaestroCompartido, (snap) => {
+            if (!snap.exists()) return;
+            const data = snap.data();
+            if (typeof window.aplicarMaestroCompartido !== 'function') return;
+            try {
+                const maestroDb = JSON.parse(data.maestroSkuDb || '{}');
+                const stockDb = JSON.parse(data.stockSistemaDb || '{}');
+                window.aplicarMaestroCompartido(maestroDb, stockDb, data.actualizadoPor);
+            } catch (error) {
+                console.error('Error al aplicar el Excel Maestro compartido:', error);
+            }
+        });
 
         // ---- Recordatorio de los 3 reportes de cierre: Inventario (ERI), Movimientos y Picking ----
         // El plan es cargar el Excel Maestro al final del día (9pm) para sincerar, y descargar
