@@ -1385,8 +1385,30 @@
             // 1. Calcular el físico acumulado por SKU a partir de todos los movimientos registrados
             //    Recepción suma, Despacho y Merma restan. Traslado no cambia el total (solo cambia de ubicación).
             const fisicoPorSku = {};
+
+            // Set con todos los SKU "reales" conocidos (los del Excel de Stock Sistema
+            // y los del Excel Maestro), para detectar cuándo el campo SKU de un movimiento
+            // en realidad no es un SKU válido.
+            const skuRealesConocidos = new Set([
+                ...Object.keys(stockSistemaDb),
+                ...Object.values(maestroSkuDb).map(p => p.sku).filter(Boolean)
+            ]);
+
             historialArray.forEach(m => {
-                const sku = (m.SKU || '').trim();
+                let sku = (m.SKU || '').trim();
+                const barcode = (m.Barcode || '').trim();
+
+                // Registros viejos (de una versión anterior de la app) a veces guardaron
+                // el código de barras escaneado en el campo SKU, en vez del SKU real del
+                // maestro (esto pasa cuando ese barcode no se reconocía en ese momento).
+                // Eso crea un "SKU fantasma" que no existe ni en el Sistema ni en el
+                // Maestro, y separa esos movimientos del producto real, dejando faltantes
+                // falsos sin Producto/Variante/Tipo. Aquí, si el SKU guardado no es un SKU
+                // real conocido pero el barcode sí resuelve a uno en el maestro, usamos ese.
+                if ((!sku || !skuRealesConocidos.has(sku)) && barcode && maestroSkuDb[barcode] && maestroSkuDb[barcode].sku) {
+                    sku = maestroSkuDb[barcode].sku;
+                }
+
                 if (!sku) return;
                 const cant = parseNumeroSeguro(m.Cantidad);
                 if (!fisicoPorSku[sku]) fisicoPorSku[sku] = 0;
@@ -2184,6 +2206,14 @@
             }
 
             const itemMaestro = maestroSkuDb[tarea.barcode.trim()] || {};
+
+            // Si este barcode no está en el Excel Maestro cargado ahora mismo, no hay forma
+            // de saber su SKU real: no se registra el movimiento (para no crear otro "SKU
+            // fantasma" en el reporte de Inventario). Hay que recargar el Maestro actualizado.
+            if (!itemMaestro.sku) {
+                alert('⚠️ Este código de barras no está en el Excel Maestro cargado. Recarga el Excel Maestro actualizado (tarjeta de arriba) antes de continuar, o usa "Saltar Tarea".');
+                return;
+            }
 
             const movimiento = {
                 Fecha: new Date().toLocaleString(),
