@@ -1743,7 +1743,7 @@
                 { id: 'C', orientacion: 'z', origenX: 1.5, origenZ: 8, posiciones: 4 },
                 { id: 'B', orientacion: 'z', origenX: 1.5, origenZ: 12, posiciones: 4 },
                 { id: 'A', orientacion: 'z', origenX: 6, origenZ: 12, posiciones: 4 },
-                { id: 'I', orientacion: 'z', origenX: 17, origenZ: 10, posiciones: 4 }
+                { id: 'I', orientacion: 'z', origenX: 15.5, origenZ: 14, posiciones: 4 }
             ];
             const ZONAS_3D = [
                 { texto: 'ZONA DE DESPACHO', x: 0, z: 3.9, ancho: 1.8, profundo: 7.0, color: 0xffffff }
@@ -1752,9 +1752,10 @@
             // - Mesa larga de despacho, junto al andamio D (con más espacio ahora
             //   que C y B se corrieron aún más lejos de D para que la mesa quepa larga).
             // - Una sola mesa en FORMA DE L (dos tramos que forman una esquina):
-            //   el brazo "ZONA DE PREPARACIÓN" horizontal, y el brazo "MERMA 666" ahora
-            //   hacia la derecha (extendiéndose hacia adelante, no hacia atrás). Después
-            //   de esta mesa en L sigue el andamio I.
+            //   el brazo "ZONA DE PREPARACIÓN" horizontal (eje x), y el brazo "MERMA 666"
+            //   girando en ángulo recto hacia adelante (eje z). El andamio I queda EN LA
+            //   MISMA LÍNEA que el brazo de Merma 666 (mismo eje x), justo después de su
+            //   extremo, como si continuara la mesa en L.
             const MESAS_3D = [
                 { texto: 'MESA', x: 0.6, z: 3.9, ancho: 1.2, profundo: 6.4, alto: 0.45 },
                 { texto: 'ZONA DE PREPARACIÓN', x: 12.6, z: 10, ancho: 4.8, profundo: 1.0, alto: 0.45 },
