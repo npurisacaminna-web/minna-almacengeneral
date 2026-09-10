@@ -109,6 +109,9 @@
         th { background-color: #f3e5f5; color: var(--minna-dark-purple); font-weight: 700; }
         .full-width { grid-column: 1 / -1; }
 
+        .fila-filtros-historial th { background-color: #fbf7fd; padding: 4px 6px; }
+        .input-filtro-historial { width: 100%; min-width: 70px; padding: 5px 6px; font-size: 11px; font-weight: 400; border: 1px solid #d1c4e9; border-radius: 4px; }
+
         #modalScanner {
             display: none;
             position: fixed;
@@ -223,6 +226,63 @@
         .detalle3d-item.amarilla { border-left-color: #ffca28; background: #fff8e1; }
         .detalle3d-item.verde { border-left-color: #66bb6a; background: #e8f5e9; }
         .detalle3d-item b { color: var(--minna-dark-purple); }
+
+        /* =====================================================================
+           MODO CELULAR — navegación tipo app (menú, pantallas, escáner ajustado)
+           ===================================================================== */
+        .barra-movil { display: none; align-items: center; gap: 10px; background: white; border: 1px solid var(--card-border); border-radius: 12px; padding: 10px 14px; margin-bottom: 15px; position: sticky; top: 8px; z-index: 600; box-shadow: 0 3px 8px rgba(0,0,0,0.08); }
+        body.modo-celular .barra-movil { display: flex; }
+        .btn-atras-movil { background: var(--minna-purple); color: #fff; border: none; border-radius: 8px; padding: 9px 13px; font-weight: 700; font-size: 13px; cursor: pointer; flex-shrink: 0; }
+        .btn-atras-movil:hover { background: var(--minna-dark-purple); }
+        .titulo-pantalla-movil { font-weight: 700; color: var(--minna-dark-purple); font-size: 15px; flex: 1; text-align: center; padding-right: 44px; }
+
+        body.modo-celular .main-container { display: block; max-width: 620px; }
+        body.modo-celular .ms-screen { display: none; }
+        body.modo-celular .ms-screen.activa { display: block; animation: msFadeIn 0.18s ease; }
+        @keyframes msFadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        .pantalla-solo-movil { display: none; }
+        body.modo-celular .pantalla-solo-movil.activa { display: block; }
+
+        /* Menú principal tipo lista de apps */
+        .menu-movil-lista { display: flex; flex-direction: column; gap: 10px; }
+        .menu-movil-item { display: flex; align-items: center; gap: 12px; background: white; border: 1px solid var(--card-border); border-radius: 12px; padding: 16px; cursor: pointer; text-align: left; width: 100%; box-shadow: 0 2px 6px rgba(0,0,0,0.04); font-family: inherit; }
+        .menu-movil-item:active { background: #f3e5f5; }
+        .menu-movil-item .icono-menu { font-size: 26px; flex-shrink: 0; width: 40px; text-align: center; }
+        .menu-movil-item .textos-menu { flex: 1; }
+        .menu-movil-item .textos-menu b { display: block; color: var(--minna-dark-purple); font-size: 15px; }
+        .menu-movil-item .textos-menu span { display: block; color: #78909c; font-size: 12px; margin-top: 2px; }
+        .menu-movil-item .chevron-menu { color: #b39ddb; font-size: 20px; flex-shrink: 0; }
+
+        /* Submenú de Operaciones (Recepción / Despacho / Traslado / Merma) */
+        .submenu-operaciones-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .op-movil-btn { background: white; border: 2px solid var(--card-border); border-radius: 14px; padding: 24px 10px; text-align: center; cursor: pointer; font-weight: 700; color: var(--minna-dark-purple); font-size: 14px; font-family: inherit; }
+        .op-movil-btn .icono-op { font-size: 30px; display: block; margin-bottom: 8px; }
+        .op-movil-btn:active { background: #f3e5f5; border-color: var(--minna-accent); }
+
+        /* Dashboard */
+        .dashboard-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        @media(min-width: 600px) { .dashboard-grid { grid-template-columns: repeat(4, 1fr); } }
+        .dash-stat { background: #f9f8fb; border: 1px solid var(--card-border); border-radius: 10px; padding: 14px 8px; text-align: center; }
+        .dash-stat .dash-valor { font-size: 22px; font-weight: 800; color: var(--minna-dark-purple); }
+        .dash-stat .dash-etiqueta { font-size: 11px; color: #78909c; font-weight: 600; margin-top: 4px; }
+        .dash-tipos-hoy { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .dash-tipo-chip { background: #ede7f6; color: var(--minna-dark-purple); border-radius: 20px; padding: 7px 14px; font-size: 12px; font-weight: 700; }
+        .dash-alertas { margin-top: 16px; }
+        .dash-alerta-item { display: flex; justify-content: space-between; gap: 8px; background: #ffebee; border-left: 4px solid #ef5350; padding: 8px 10px; border-radius: 6px; font-size: 12px; margin-bottom: 6px; }
+        .dash-alerta-item b { color: #c62828; white-space: nowrap; }
+
+        /* Toques más grandes y amigables en celular */
+        body.modo-celular input, body.modo-celular select { font-size: 15px; padding: 11px; }
+        body.modo-celular .btn-primary, body.modo-celular .btn-excel { padding: 14px; font-size: 15px; }
+        body.modo-celular .tab-btn { padding: 12px 6px; font-size: 12px; }
+        body.modo-celular .btn-scan { padding: 0 14px; font-size: 14px; }
+
+        /* Escáner ajustado para celular: pantalla completa, cuadro visible sin desplazar */
+        body.modo-celular #modalScanner { padding: 0; }
+        body.modo-celular .scanner-container { max-width: 100%; height: 100%; border-radius: 0; display: flex; flex-direction: column; justify-content: center; padding: 14px; }
+        body.modo-celular #reader { max-height: 78vh; }
+        body.modo-celular #reader video { object-fit: cover !important; max-height: 78vh; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -235,6 +295,11 @@
             <button type="button" class="btn-cambiar-responsable" onclick="abrirModalResponsable()">Cambiar</button>
         </div>
     </header>
+
+    <div class="barra-movil" id="barraMovil">
+        <button type="button" class="btn-atras-movil" id="btnAtrasMovil" onclick="window.irAtrasMovil()">← Atrás</button>
+        <div class="titulo-pantalla-movil" id="tituloPantallaMovil">Menú Principal</div>
+    </div>
 
     <div id="modalPin" style="display:none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(94, 53, 177, 0.97); z-index: 10001; justify-content: center; align-items: center; padding: 15px;">
         <div class="responsable-modal-box">
@@ -289,9 +354,103 @@
 
 
     <div class="main-container">
-        
+
+        <!-- MENÚ PRINCIPAL (solo modo celular) -->
+        <div class="pantalla-solo-movil ms-screen activa" data-screen="home">
+            <div class="menu-movil-lista">
+                <button type="button" class="menu-movil-item" onclick="window.irAPantallaMovil('dashboard')">
+                    <span class="icono-menu">📊</span>
+                    <span class="textos-menu"><b>Dashboard</b><span>Resumen general del almacén</span></span>
+                    <span class="chevron-menu">›</span>
+                </button>
+                <button type="button" class="menu-movil-item" onclick="window.irAPantallaMovil('excelMaestro')">
+                    <span class="icono-menu">📁</span>
+                    <span class="textos-menu"><b>Cargar Excel Maestro</b><span>Productos, stock y picking por tareas</span></span>
+                    <span class="chevron-menu">›</span>
+                </button>
+                <button type="button" class="menu-movil-item" onclick="window.irAPantallaMovil('operacionesMenu')">
+                    <span class="icono-menu">✍️</span>
+                    <span class="textos-menu"><b>Operaciones</b><span>Recepción, Despacho, Traslado o Merma</span></span>
+                    <span class="chevron-menu">›</span>
+                </button>
+                <button type="button" class="menu-movil-item" onclick="window.irAPantallaMovil('buscarUbicacion')">
+                    <span class="icono-menu">🔍</span>
+                    <span class="textos-menu"><b>Buscar Ubicación</b><span>Consulta stock por producto o SKU</span></span>
+                    <span class="chevron-menu">›</span>
+                </button>
+                <button type="button" class="menu-movil-item" onclick="window.irAPantallaMovil('layout')">
+                    <span class="icono-menu">🏢</span>
+                    <span class="textos-menu"><b>Layout 3D</b><span>Mapa del almacén por ubicación</span></span>
+                    <span class="chevron-menu">›</span>
+                </button>
+                <button type="button" class="menu-movil-item" onclick="window.irAPantallaMovil('movimiento')">
+                    <span class="icono-menu">📜</span>
+                    <span class="textos-menu"><b>Movimiento</b><span>Historial global sincronizado</span></span>
+                    <span class="chevron-menu">›</span>
+                </button>
+                <button type="button" class="menu-movil-item" onclick="window.irAPantallaMovil('reportes')">
+                    <span class="icono-menu">📥</span>
+                    <span class="textos-menu"><b>Descargar Reportes</b><span>Movimientos, ERI, picking y guía</span></span>
+                    <span class="chevron-menu">›</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- SUBMENÚ DE OPERACIONES (solo modo celular) -->
+        <div class="pantalla-solo-movil ms-screen" data-screen="operacionesMenu">
+            <div class="submenu-operaciones-grid">
+                <button type="button" class="op-movil-btn" onclick="window.abrirOperacionMovil('Recepción')">
+                    <span class="icono-op">📥</span>Recepción
+                </button>
+                <button type="button" class="op-movil-btn" onclick="window.abrirOperacionMovil('Despacho')">
+                    <span class="icono-op">🚚</span>Despacho
+                </button>
+                <button type="button" class="op-movil-btn" onclick="window.abrirOperacionMovil('Traslado')">
+                    <span class="icono-op">🔄</span>Traslado
+                </button>
+                <button type="button" class="op-movil-btn" onclick="window.abrirOperacionMovil('Merma')">
+                    <span class="icono-op">⚠️</span>Merma
+                </button>
+            </div>
+        </div>
+
+        <!-- DASHBOARD (visible siempre en escritorio; primera pantalla en celular) -->
+        <div class="card full-width ms-screen" data-screen="dashboard">
+            <h3>📊 Dashboard General</h3>
+            <div class="dashboard-grid">
+                <div class="dash-stat"><div class="dash-valor" id="dashProductosMaestro">0</div><div class="dash-etiqueta">Productos en Maestro</div></div>
+                <div class="dash-stat"><div class="dash-valor" id="dashTotalMovimientos">0</div><div class="dash-etiqueta">Movimientos Totales</div></div>
+                <div class="dash-stat"><div class="dash-valor" id="dashMovimientosHoy">0</div><div class="dash-etiqueta">Movimientos Hoy</div></div>
+                <div class="dash-stat"><div class="dash-valor" id="dashStockTotal">0</div><div class="dash-etiqueta">Unidades en Stock</div></div>
+            </div>
+            <div class="dash-tipos-hoy">
+                <span class="dash-tipo-chip">📥 Recepción hoy: <strong id="dashRecepcionHoy">0</strong></span>
+                <span class="dash-tipo-chip">🚚 Despacho hoy: <strong id="dashDespachoHoy">0</strong></span>
+                <span class="dash-tipo-chip">🔄 Traslado hoy: <strong id="dashTrasladoHoy">0</strong></span>
+                <span class="dash-tipo-chip">⚠️ Merma hoy: <strong id="dashMermaHoy">0</strong></span>
+                <span class="dash-tipo-chip" style="background:#ffebee; color:#c62828;">💸 Merma valorizada (histórico): <strong id="dashMermaValorizadaTotal">S/ 0.00</strong></span>
+            </div>
+            <div id="dashEstadoMaestroHoy" style="font-size:12px; color:#78909c; margin-top:12px;"></div>
+
+            <div class="dash-alertas">
+                <h3 style="font-size:14px;">📦 ERI — Exactitud de Registro de Inventario</h3>
+                <div id="dashEriMensaje"><p style="font-size:12px;color:#78909c;">Carga el Excel Maestro (con el Stock del Sistema) para calcular el ERI y el valorizado de faltantes/sobrantes.</p></div>
+                <div class="dashboard-grid" id="dashEriGrid" style="display:none;">
+                    <div class="dash-stat"><div class="dash-valor" id="dashEriPorcentaje">0%</div><div class="dash-etiqueta">ERI (Exactitud)</div></div>
+                    <div class="dash-stat"><div class="dash-valor" id="dashValorFaltantes">S/ 0.00</div><div class="dash-etiqueta">Valorizado Faltantes</div></div>
+                    <div class="dash-stat"><div class="dash-valor" id="dashValorSobrantes">S/ 0.00</div><div class="dash-etiqueta">Valorizado Sobrantes</div></div>
+                    <div class="dash-stat"><div class="dash-valor" id="dashValorDiferencias">S/ 0.00</div><div class="dash-etiqueta">Valorizado Diferencias</div></div>
+                </div>
+            </div>
+
+            <div class="dash-alertas">
+                <h3 style="font-size:14px;">⚠️ Alertas de Stock Bajo (≤10 unidades)</h3>
+                <div id="dashAlertasStockBajo"><p style="font-size:12px;color:#78909c;">Carga el Excel Maestro y registra movimientos para ver alertas aquí.</p></div>
+            </div>
+        </div>
+
         <!-- TARDETERIA / FORMULARIO PRINCIPAL -->
-        <div class="card">
+        <div class="card ms-screen" data-screen="excelMaestro">
             <h3>1. Cargar Excel Maestro de Productos</h3>
             <div class="form-group">
                 <label>Selecciona tu archivo de Excel (.xlsx / .xls):</label>
@@ -347,7 +506,11 @@
                 <div id="tareaPickingVacio" style="color:#90a4ae; font-size:13px; margin-top:10px;">Carga el Excel de Picking para empezar con las tareas.</div>
             </div>
 
-            <h3 style="margin-top: 20px;">2. Registrar Operación Manual</h3>
+        </div>
+
+        <!-- REGISTRAR OPERACIÓN MANUAL -->
+        <div class="card ms-screen" data-screen="operaciones">
+            <h3>2. Registrar Operación Manual</h3>
             
             <div class="form-group">
                 <label>Tipo de Operación:</label>
@@ -457,7 +620,7 @@
         </div>
 
         <!-- TARJETA INDEPENDIENTE DE CONSULTA DE UBICACIONES Y CANTIDADES -->
-        <div class="card">
+        <div class="card ms-screen" data-screen="buscarUbicacion">
             <h3>🔍 Consultar Ubicación y Stock de Producto</h3>
             <p style="font-size: 12px; color: #546e7a; margin-bottom: 10px;">
                 Escanea o escribe el producto/SKU para ver instantáneamente en qué ubicaciones se encuentra y qué cantidad hay en cada una.
@@ -472,8 +635,11 @@
             </div>
 
             <div id="resultadoUbicacionesBox" style="display: none;" class="ubicaciones-resultado"></div>
-            
-            <div style="margin-top: 25px;">
+        </div>
+
+        <!-- ESTADO DEL SISTEMA / DESCARGAR REPORTES -->
+        <div class="card ms-screen" data-screen="reportes">
+            <div>
                 <h3>Estado del Sistema en Vivo</h3>
                 <p style="font-size: 13px; color: #546e7a; line-height: 1.5;">
                     Conectado a Firebase Cloud. Cualquier recepción, despacho, traslado o merma que registres se actualizará automáticamente en los celulares de todo tu equipo al instante.
@@ -488,7 +654,7 @@
         </div>
 
         <!-- LAYOUT 3D DEL ALMACÉN -->
-        <div class="card full-width">
+        <div class="card full-width ms-screen" data-screen="layout">
             <h3>🏢 Layout 3D del Almacén</h3>
             <p style="font-size: 12px; color: #546e7a; margin-bottom: 10px;">
                 9 andamios (A-I), 5 niveles cada uno y 4 posiciones por nivel (el andamio G tiene solo 3). Arrastra para rotar, rueda/pellizca para hacer zoom, y toca una caja para ver qué hay en esa ubicación.
@@ -504,8 +670,11 @@
         </div>
 
         <!-- HISTORIAL GLOBAL -->
-        <div class="card full-width">
+        <div class="card full-width ms-screen" data-screen="movimiento">
             <h3>Historial Global Sincronizado</h3>
+            <div style="display:flex; justify-content:flex-end; margin-bottom:6px;">
+                <button type="button" class="btn-edit" onclick="window.limpiarFiltrosHistorial()">🧹 Limpiar filtros</button>
+            </div>
             <div class="table-responsive">
                 <table id="tablaHistorial">
                     <thead>
@@ -524,6 +693,22 @@
                             <th>Cant.</th>
                             <th>Responsable</th>
                             <th>Acciones</th>
+                        </tr>
+                        <tr class="fila-filtros-historial">
+                            <th><input type="text" class="input-filtro-historial" data-col="fecha" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="operacion" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="barcode" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="sku" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="producto" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="variante" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="tipo" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="marca" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="ubicacion" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th id="thFiltroDetalle" style="display: none;"><input type="text" class="input-filtro-historial" data-col="detalle" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th id="thFiltroCausa" style="display: none;"><input type="text" class="input-filtro-historial" data-col="causa" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="cantidad" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th><input type="text" class="input-filtro-historial" data-col="responsable" placeholder="Filtrar..." oninput="window.aplicarFiltrosHistorial()"></th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -555,6 +740,190 @@
 
         // ---- Estado de edición de ubicación de un registro del historial ----
         let docEnEdicion = '';
+
+        // =====================================================================
+        // MODO CELULAR — detección + navegación tipo app (menú, atrás, pantallas)
+        // =====================================================================
+        function esDispositivoMovil() {
+            const uaMovil = /Android|iPhone|iPad|iPod|Windows Phone|Mobile/i.test(navigator.userAgent);
+            const pantallaAngosta = window.innerWidth <= 820;
+            return uaMovil || pantallaAngosta;
+        }
+
+        if (esDispositivoMovil()) {
+            document.body.classList.add('modo-celular');
+        }
+
+        let navStackMovil = ['home'];
+        const TITULOS_PANTALLA_MOVIL = {
+            home: 'Menú Principal',
+            dashboard: '📊 Dashboard',
+            excelMaestro: '📁 Excel Maestro',
+            operacionesMenu: '✍️ Operaciones',
+            operaciones: '✍️ Operación',
+            buscarUbicacion: '🔍 Buscar Ubicación',
+            layout: '🏢 Layout 3D',
+            movimiento: '📜 Movimiento',
+            reportes: '📥 Reportes'
+        };
+
+        function mostrarPantallaMovil(key) {
+            document.querySelectorAll('.ms-screen').forEach(el => el.classList.remove('activa'));
+            const el = document.querySelector('[data-screen="' + key + '"]');
+            if (el) el.classList.add('activa');
+
+            const tituloEl = document.getElementById('tituloPantallaMovil');
+            const btnAtras = document.getElementById('btnAtrasMovil');
+            if (tituloEl) tituloEl.innerText = TITULOS_PANTALLA_MOVIL[key] || 'Minna Almacén';
+            if (btnAtras) btnAtras.style.visibility = (key === 'home') ? 'hidden' : 'visible';
+
+            window.scrollTo(0, 0);
+
+            if (key === 'dashboard' && typeof window.actualizarDashboard === 'function') {
+                window.actualizarDashboard();
+            }
+        }
+
+        window.irAPantallaMovil = function(key) {
+            navStackMovil.push(key);
+            mostrarPantallaMovil(key);
+        };
+
+        window.irAtrasMovil = function() {
+            if (navStackMovil.length > 1) navStackMovil.pop();
+            mostrarPantallaMovil(navStackMovil[navStackMovil.length - 1]);
+        };
+
+        // Al presionar Recepción/Despacho/Traslado/Merma desde el submenú móvil:
+        // sincroniza el mismo formulario/tabs que usa la versión de escritorio.
+        window.abrirOperacionMovil = function(tipo) {
+            const tabBtn = Array.from(document.querySelectorAll('.tabs .tab-btn')).find(b => b.textContent.trim() === tipo);
+            if (tabBtn && typeof window.setTipoOperacion === 'function') {
+                window.setTipoOperacion(tipo, tabBtn);
+            }
+            window.irAPantallaMovil('operaciones');
+        };
+
+        // Pantalla inicial (detrás de los modales de acceso/responsable)
+        mostrarPantallaMovil('home');
+
+        // ---- Filtros por columna del Historial Global ----
+        // Cada input de la fila de filtros tiene data-col; se compara contra la celda
+        // .col-<mismoNombre> de cada fila (búsqueda por texto, sin distinguir mayúsculas).
+        // Se re-aplica automáticamente después de cada sincronización con la nube.
+        window.aplicarFiltrosHistorial = function() {
+            const filtros = {};
+            document.querySelectorAll('.input-filtro-historial').forEach(inp => {
+                const col = inp.dataset.col;
+                const val = inp.value.trim().toLowerCase();
+                if (val) filtros[col] = val;
+            });
+
+            const filas = document.querySelectorAll('#tablaHistorial tbody tr');
+            filas.forEach(fila => {
+                let visible = true;
+                for (const col in filtros) {
+                    const celda = fila.querySelector('.col-' + col);
+                    const texto = celda ? celda.innerText.toLowerCase() : '';
+                    if (!texto.includes(filtros[col])) { visible = false; break; }
+                }
+                fila.style.display = visible ? '' : 'none';
+            });
+        };
+
+        window.limpiarFiltrosHistorial = function() {
+            document.querySelectorAll('.input-filtro-historial').forEach(inp => { inp.value = ''; });
+            window.aplicarFiltrosHistorial();
+        };
+
+        // ---- Dashboard: resumen general calculado a partir de los datos ya cargados ----
+        window.actualizarDashboard = function() {
+            const setTxt = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+
+            const totalProductosMaestro = Object.keys(maestroSkuDb).length;
+            const totalMovimientos = historialArray.length;
+
+            const ahora = new Date();
+            const inicioHoy = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()).getTime();
+            const movimientosHoy = historialArray.filter(m => (m.Timestamp || 0) >= inicioHoy);
+
+            const contadorTipos = { 'Recepción': 0, 'Despacho': 0, 'Traslado': 0, 'Merma': 0 };
+            movimientosHoy.forEach(m => {
+                if (Object.prototype.hasOwnProperty.call(contadorTipos, m.Operacion)) contadorTipos[m.Operacion]++;
+            });
+
+            // Stock neto total por SKU (Recepción suma, Despacho/Merma restan; Traslado no cambia el total)
+            const stockPorSku = {};
+            historialArray.forEach(m => {
+                const sku = (m.SKU || '').trim();
+                if (!sku) return;
+                const cant = parseInt(m.Cantidad) || 0;
+                if (!stockPorSku[sku]) stockPorSku[sku] = { producto: m.Producto || sku, total: 0 };
+                if (m.Operacion === 'Recepción') stockPorSku[sku].total += cant;
+                else if (m.Operacion === 'Despacho' || m.Operacion === 'Merma') stockPorSku[sku].total -= cant;
+                if (m.Producto) stockPorSku[sku].producto = m.Producto;
+            });
+
+            let stockTotalUnidades = 0;
+            const alertasStockBajo = [];
+            Object.values(stockPorSku).forEach(d => {
+                if (d.total > 0) stockTotalUnidades += d.total;
+                if (d.total > 0 && d.total <= 10) alertasStockBajo.push(d);
+            });
+            alertasStockBajo.sort((a, b) => a.total - b.total);
+
+            setTxt('dashProductosMaestro', totalProductosMaestro);
+            setTxt('dashTotalMovimientos', totalMovimientos);
+            setTxt('dashMovimientosHoy', movimientosHoy.length);
+            setTxt('dashStockTotal', stockTotalUnidades.toLocaleString('es-PE'));
+            setTxt('dashRecepcionHoy', contadorTipos['Recepción']);
+            setTxt('dashDespachoHoy', contadorTipos['Despacho']);
+            setTxt('dashTrasladoHoy', contadorTipos['Traslado']);
+            setTxt('dashMermaHoy', contadorTipos['Merma']);
+
+            const boxAlertas = document.getElementById('dashAlertasStockBajo');
+            if (boxAlertas) {
+                if (alertasStockBajo.length === 0) {
+                    boxAlertas.innerHTML = '<p style="font-size:12px;color:#78909c;">✅ No hay productos con stock crítico (≤10 unidades) por ahora.</p>';
+                } else {
+                    boxAlertas.innerHTML = alertasStockBajo.slice(0, 8).map(d =>
+                        `<div class="dash-alerta-item"><span>${d.producto}</span><b>${d.total} u.</b></div>`
+                    ).join('');
+                }
+            }
+
+            const estadoMaestroBanner = document.getElementById('alertaMaestroDiario');
+            const dashEstado = document.getElementById('dashEstadoMaestroHoy');
+            if (dashEstado) {
+                dashEstado.innerText = (estadoMaestroBanner && estadoMaestroBanner.style.display !== 'none' && estadoMaestroBanner.innerText)
+                    ? estadoMaestroBanner.innerText
+                    : '⏳ El Excel Maestro aún no se ha cargado hoy.';
+            }
+
+            // Merma valorizada acumulada (histórico, no solo la de hoy)
+            const formatoSoles = (n) => 'S/ ' + (n || 0).toLocaleString('es-PE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            setTxt('dashMermaValorizadaTotal', formatoSoles(calcularMermaValorizadaTotal()));
+
+            // ERI + valorizado de faltantes/sobrantes (requiere el Stock Sistema del Excel Maestro)
+            const kpiEri = calcularKpiInventarioERI();
+            const mensajeEri = document.getElementById('dashEriMensaje');
+            const gridEri = document.getElementById('dashEriGrid');
+            if (kpiEri) {
+                if (mensajeEri) mensajeEri.style.display = 'none';
+                if (gridEri) gridEri.style.display = '';
+                const eriEl = document.getElementById('dashEriPorcentaje');
+                if (eriEl) {
+                    eriEl.innerText = kpiEri.eri.toFixed(1) + '%';
+                    eriEl.style.color = kpiEri.eri >= 95 ? '#2e7d32' : (kpiEri.eri >= 85 ? '#ff8f00' : '#c62828');
+                }
+                setTxt('dashValorFaltantes', formatoSoles(kpiEri.valorTotalFaltantes));
+                setTxt('dashValorSobrantes', formatoSoles(kpiEri.valorTotalSobrantes));
+                setTxt('dashValorDiferencias', formatoSoles(kpiEri.valorTotalDiferencias));
+            } else {
+                if (mensajeEri) mensajeEri.style.display = 'block';
+                if (gridEri) gridEri.style.display = 'none';
+            }
+        };
 
         window.onload = function() {
             const savedDb = localStorage.getItem('minna_maestro_db');
@@ -757,6 +1126,10 @@
                 // Si ya había una tarea de picking en pantalla, recalcula su ubicación sugerida con el maestro recién cargado.
                 if (typeof renderizarTareaPickingActual === 'function') {
                     renderizarTareaPickingActual();
+                }
+
+                if (typeof window.actualizarDashboard === 'function') {
+                    window.actualizarDashboard();
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -1243,7 +1616,19 @@
                 html5QrCode = new Html5Qrcode("reader");
             }
 
-            const config = { fps: 10, qrbox: { width: 250, height: 150 } };
+            // En celular, el recuadro de escaneo se calcula como % de lo que realmente
+            // se ve en pantalla (no un tamaño fijo), para que el código quede visible
+            // de inmediato sin tener que deslizar/hacer zoom para ubicarlo.
+            const config = {
+                fps: 10,
+                qrbox: function(viewfinderWidth, viewfinderHeight) {
+                    const ladoMenor = Math.min(viewfinderWidth, viewfinderHeight);
+                    const factor = document.body.classList.contains('modo-celular') ? 0.75 : 0.65;
+                    const lado = Math.floor(ladoMenor * factor);
+                    return { width: lado, height: Math.floor(lado * 0.6) };
+                },
+                aspectRatio: document.body.classList.contains('modo-celular') ? 1.0 : 1.7777
+            };
             html5QrCode.start(
                 { facingMode: "environment" }, 
                 config, 
@@ -1375,12 +1760,13 @@
         };
 
         // ---- Cruce de Inventario: Sistema (Excel cargado) vs. Físico (movimientos registrados en la app) ----
-        window.exportarInventarioERI = function() {
+        // Calcula el KPI de ERI (Exactitud de Registro de Inventario) a partir del
+        // Stock Sistema (Excel Maestro) y el historial de movimientos. Se usa tanto
+        // para el Excel de Inventario ERI como para el Dashboard en vivo.
+        // Devuelve null si aún no se cargó el Excel de Stock Sistema.
+        function calcularKpiInventarioERI() {
             const totalSkuSistema = Object.keys(stockSistemaDb).length;
-            if (totalSkuSistema === 0) {
-                alert('Primero carga el Excel de "Stock Actual del Sistema" (tarjeta 1) para poder calcular el ERI.');
-                return;
-            }
+            if (totalSkuSistema === 0) return null;
 
             // 1. Calcular el físico acumulado por SKU a partir de todos los movimientos registrados
             //    Recepción suma, Despacho y Merma restan. Traslado no cambia el total (solo cambia de ubicación).
@@ -1485,6 +1871,32 @@
             const valorTotalDiferencias = valorTotalFaltantes + valorTotalSobrantes;
             const eri = valorTotalSistema > 0 ? (1 - (valorTotalDiferencias / valorTotalSistema)) * 100 : 0;
 
+            return { faltantes, sobrantes, valorTotalSistema, valorTotalFaltantes, valorTotalSobrantes, valorTotalDiferencias, eri };
+        }
+
+        // Calcula el valor monetario acumulado (histórico, no solo hoy) de TODAS las
+        // mermas registradas, usando el costo unitario del Stock Sistema por SKU.
+        function calcularMermaValorizadaTotal() {
+            let total = 0;
+            historialArray.forEach(m => {
+                if (m.Operacion !== 'Merma') return;
+                const sku = (m.SKU || '').trim();
+                if (!sku) return;
+                const cant = parseNumeroSeguro(m.Cantidad);
+                const costoUnitario = (stockSistemaDb[sku] && stockSistemaDb[sku].costoUnitario) || 0;
+                total += cant * costoUnitario;
+            });
+            return total;
+        }
+
+        window.exportarInventarioERI = function() {
+            const kpi = calcularKpiInventarioERI();
+            if (!kpi) {
+                alert('Primero carga el Excel de "Stock Actual del Sistema" (tarjeta 1) para poder calcular el ERI.');
+                return;
+            }
+            const { faltantes, sobrantes, valorTotalSistema, valorTotalFaltantes, valorTotalSobrantes, valorTotalDiferencias, eri } = kpi;
+
             // Filas de totales al pie de cada tabla
             if (faltantes.length > 0) {
                 faltantes.push({ SKU: '', Producto: '', Variante: '', Tipo: '', 'Stock Sistema': '', 'Stock Físico (App)': '', 'Cantidad Faltante': 'TOTAL', 'Costo Unitario': '', 'Valor Faltante': +valorTotalFaltantes.toFixed(2) });
@@ -1517,6 +1929,7 @@
             XLSX.writeFile(workbook, "Inventario_ERI_Minna_SAC.xlsx");
             if (typeof window.marcarReporteDescargadoHoy === 'function') window.marcarReporteDescargadoHoy('inventario');
         };
+
 
         // ---- Utilidades para reportes de Picking del día ----
         function esHoy(timestamp) {
@@ -1694,12 +2107,16 @@
             const tbody = document.querySelector('#tablaHistorial tbody');
             const thDetalle = document.getElementById('thDetalle');
             const thCausa = document.getElementById('thCausa');
+            const thFiltroDetalle = document.getElementById('thFiltroDetalle');
+            const thFiltroCausa = document.getElementById('thFiltroCausa');
             
             const hayDetalles = historialArray.some(m => m.Operacion === 'Traslado' || m.Operacion === 'Merma' || m.Operacion === 'Despacho');
             const hayCausas = historialArray.some(m => m.Operacion === 'Merma');
 
             thDetalle.style.display = hayDetalles ? '' : 'none';
             thCausa.style.display = hayCausas ? '' : 'none';
+            if (thFiltroDetalle) thFiltroDetalle.style.display = hayDetalles ? '' : 'none';
+            if (thFiltroCausa) thFiltroCausa.style.display = hayCausas ? '' : 'none';
 
             historialArray.sort((a, b) => (b.Timestamp || 0) - (a.Timestamp || 0));
 
@@ -1712,23 +2129,23 @@
                     detalleTexto = mov.Sucursal || '-';
                 }
 
-                const tdDetalleHtml = hayDetalles ? `<td>${detalleTexto}</td>` : '';
-                const tdCausaHtml = hayCausas ? `<td>${mov.Causa || '-'}</td>` : '';
+                const tdDetalleHtml = hayDetalles ? `<td class="col-detalle">${detalleTexto}</td>` : '';
+                const tdCausaHtml = hayCausas ? `<td class="col-causa">${mov.Causa || '-'}</td>` : '';
 
                 const row = `<tr>
-                    <td>${mov.Fecha}</td>
-                    <td><strong>${mov.Operacion}</strong></td>
-                    <td>${mov.Barcode}</td>
-                    <td><strong>${mov.SKU}</strong></td>
-                    <td>${mov.Producto}</td>
-                    <td>${mov.Variante}</td>
-                    <td>${mov.Tipo}</td>
-                    <td>${mov.Marca}</td>
-                    <td>${mov.Ubicacion}</td>
+                    <td class="col-fecha">${mov.Fecha}</td>
+                    <td class="col-operacion"><strong>${mov.Operacion}</strong></td>
+                    <td class="col-barcode">${mov.Barcode}</td>
+                    <td class="col-sku"><strong>${mov.SKU}</strong></td>
+                    <td class="col-producto">${mov.Producto}</td>
+                    <td class="col-variante">${mov.Variante}</td>
+                    <td class="col-tipo">${mov.Tipo}</td>
+                    <td class="col-marca">${mov.Marca}</td>
+                    <td class="col-ubicacion">${mov.Ubicacion}</td>
                     ${tdDetalleHtml}
                     ${tdCausaHtml}
-                    <td><strong>${mov.Cantidad}</strong></td>
-                    <td>${mov.Responsable}</td>
+                    <td class="col-cantidad"><strong>${mov.Cantidad}</strong></td>
+                    <td class="col-responsable">${mov.Responsable}</td>
                     <td>
                         <button class="btn-edit" onclick="window.solicitarEdicionUbicacion('${mov.id}')" title="Editar ubicación">✏️</button>
                         <button class="btn-delete" onclick="window.solicitarEliminacion('${mov.id}')" title="Eliminar registro">🗑️</button>
@@ -1739,6 +2156,14 @@
 
             if (typeof window.actualizarColoresLayout3D === 'function') {
                 window.actualizarColoresLayout3D();
+            }
+
+            if (typeof window.actualizarDashboard === 'function') {
+                window.actualizarDashboard();
+            }
+
+            if (typeof window.aplicarFiltrosHistorial === 'function') {
+                window.aplicarFiltrosHistorial();
             }
         };
 
@@ -2110,6 +2535,10 @@
                 banner.innerText = `✅ Excel Maestro ya cargado hoy (${hoy}) por ${data.cargadoPor || 'alguien del equipo'}.`;
             } else {
                 banner.style.display = 'none';
+            }
+
+            if (typeof window.actualizarDashboard === 'function') {
+                window.actualizarDashboard();
             }
         });
 
