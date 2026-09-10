@@ -313,7 +313,13 @@
                 </div>
 
                 <div id="tareaPickingContenido" class="picking-tarea-box" style="display:none;">
-                    <div class="picking-tarea-titulo" id="tareaPickingTitulo">Tarea 1 de 1</div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+                        <div class="picking-tarea-titulo" id="tareaPickingTitulo" style="margin-bottom:0;">Tarea 1 de 1</div>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <input type="number" id="inputIrATarea" min="1" placeholder="N° tarea" style="width:80px; padding:6px;">
+                            <button type="button" class="btn-edit" onclick="irATareaPicking()">➡️ Ir a tarea</button>
+                        </div>
+                    </div>
 
                     <div class="picking-info-row">📍 Sucursal: <strong id="tareaPickingSucursal">-</strong></div>
                     <div class="picking-info-row">🏷️ barcode / SKU: <strong id="tareaPickingBarcode">-</strong></div>
@@ -874,6 +880,25 @@
         window.saltarTareaPicking = function() {
             if (!pickingTareas.length) return;
             pickingIndiceActual++;
+            renderizarTareaPickingActual();
+        };
+
+        // Va directo a una tarea específica por número (1-based), sin tener que ir
+        // saltando una por una. Útil cuando se vuelve a cargar el mismo Excel de
+        // picking y ya se sabe en qué tarea se había quedado.
+        window.irATareaPicking = function() {
+            const input = document.getElementById('inputIrATarea');
+            if (!pickingTareas.length) {
+                alert('Primero carga un Excel de Picking.');
+                return;
+            }
+            const n = parseInt(input.value, 10);
+            if (!n || n < 1 || n > pickingTareas.length) {
+                alert(`Ingresa un número de tarea entre 1 y ${pickingTareas.length}.`);
+                return;
+            }
+            pickingIndiceActual = n - 1;
+            input.value = '';
             renderizarTareaPickingActual();
         };
 
@@ -1608,7 +1633,8 @@
             if (typeof window.marcarReporteDescargadoHoy === 'function') window.marcarReporteDescargadoHoy('picking');
         };
 
-        // Excel con la plantilla exacta para hacer la guía: Cantidad, Código de Barras/SKU/N° Serie, Impuesto (IVA), Costo Neto Glosa
+        // Excel con la plantilla exacta para hacer la guía: Cantidad, Código de Barras/SKU/N° Serie,
+        // Glosa, Atributos adicionales, Valor Unitario, % Descuento, Impuesto (IGV), Costo Neto Glosa.
         // Se genera una hoja por sucursal, según el picking (despachos) de hoy.
         window.exportarGuiaHoy = function() {
             const grupos = obtenerPickingHoyPorSucursal();
@@ -1625,7 +1651,11 @@
                 const items = grupos[suc].map(m => ({
                     'Cantidad': m.Cantidad,
                     'Código de Barras, SKU o Número de Serie': m.Barcode || m.SKU,
-                    'Impuesto': 'IVA',
+                    'Glosa': '',
+                    'Atributos adicionales': '',
+                    'Valor Unitario': '',
+                    '% Descuento': '',
+                    'Impuesto': 'IGV',
                     'Costo Neto Glosa': ''
                 }));
                 const hoja = XLSX.utils.json_to_sheet(items);
@@ -1710,24 +1740,25 @@
                 { id: 'F', orientacion: 'z', origenX: 6, origenZ: 4, posiciones: 4 },
                 { id: 'G', orientacion: 'z', origenX: 6, origenZ: 8, posiciones: 3 },
                 { id: 'H', orientacion: 'x', origenX: 7, origenZ: 10, posiciones: 4 },
-                { id: 'C', orientacion: 'z', origenX: 1.5, origenZ: 6, posiciones: 4 },
-                { id: 'B', orientacion: 'z', origenX: 1.5, origenZ: 10, posiciones: 4 },
+                { id: 'C', orientacion: 'z', origenX: 1.5, origenZ: 8, posiciones: 4 },
+                { id: 'B', orientacion: 'z', origenX: 1.5, origenZ: 12, posiciones: 4 },
                 { id: 'A', orientacion: 'z', origenX: 6, origenZ: 12, posiciones: 4 },
-                { id: 'I', orientacion: 'z', origenX: 17, origenZ: 8, posiciones: 4 }
+                { id: 'I', orientacion: 'z', origenX: 17, origenZ: 10, posiciones: 4 }
             ];
             const ZONAS_3D = [
-                { texto: 'ZONA DE DESPACHO', x: 0, z: 2.9, ancho: 1.6, profundo: 4.8, color: 0xffffff }
+                { texto: 'ZONA DE DESPACHO', x: 0, z: 3.9, ancho: 1.8, profundo: 7.0, color: 0xffffff }
             ];
             // Mesas (mobiliario, no son ubicaciones de stock):
             // - Mesa larga de despacho, junto al andamio D (con más espacio ahora
-            //   que C y B se corrieron más lejos de D para que la mesa quepa larga).
+            //   que C y B se corrieron aún más lejos de D para que la mesa quepa larga).
             // - Una sola mesa en FORMA DE L (dos tramos que forman una esquina):
-            //   un brazo dice "ZONA DE PREPARACIÓN" y el otro "MERMA 666".
-            //   Después de esta mesa en L sigue el andamio I.
+            //   el brazo "ZONA DE PREPARACIÓN" horizontal, y el brazo "MERMA 666" ahora
+            //   hacia la derecha (extendiéndose hacia adelante, no hacia atrás). Después
+            //   de esta mesa en L sigue el andamio I.
             const MESAS_3D = [
-                { texto: 'MESA', x: 0.6, z: 2.9, ancho: 1.0, profundo: 4.2, alto: 0.45 },
+                { texto: 'MESA', x: 0.6, z: 3.9, ancho: 1.2, profundo: 6.4, alto: 0.45 },
                 { texto: 'ZONA DE PREPARACIÓN', x: 12.6, z: 10, ancho: 4.8, profundo: 1.0, alto: 0.45 },
-                { texto: 'MERMA 666', x: 15.5, z: 7.75, ancho: 1.0, profundo: 3.5, alto: 0.45 }
+                { texto: 'MERMA 666', x: 15.5, z: 12.25, ancho: 1.0, profundo: 3.5, alto: 0.45 }
             ];
             const SPACING = 1.0;
             const CAJA = 0.82;
