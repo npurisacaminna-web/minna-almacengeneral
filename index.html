@@ -647,8 +647,8 @@
                 <div style="margin-top: 15px; text-align: center; display: flex; flex-direction: column; gap: 10px;">
                     <button class="btn-excel" onclick="exportarExcel()">📥 Descargar Todos los Movimientos en Excel</button>
                     <button class="btn-excel" style="background: var(--minna-dark-purple);" onclick="exportarInventarioERI()">📦 Descargar Inventario (Faltantes / Sobrantes / ERI)</button>
-                    <button class="btn-excel" style="background: var(--minna-accent);" onclick="exportarPickingHoy()">🚚 Descargar Picking de Hoy por Sucursal + Productividad</button>
-                    <button class="btn-excel" style="background: #ff8f00;" onclick="exportarGuiaHoy()">📄 Descargar Excel para Guía (Picking de Hoy)</button>
+                    <button class="btn-excel" style="background: var(--minna-accent);" onclick="exportarPickingHoy()">🚚 Descargar Picking de Hoy y Ayer por Sucursal + Productividad</button>
+                    <button class="btn-excel" style="background: #ff8f00;" onclick="exportarGuiaHoy()">📄 Descargar Excel para Guía (Picking de Hoy y Ayer)</button>
                 </div>
             </div>
         </div>
@@ -1211,13 +1211,28 @@
                     }
                 });
 
+                // Ordena las tareas por cercanía real dentro del almacén (mismo criterio que
+                // el resto de la app): ubicación sugerida de A a Z, luego nivel 1 a 5, luego
+                // posición 1 a 4. Así el picker recorre el almacén en una sola pasada en vez
+                // de saltar de un extremo a otro. Las tareas sin ubicación sugerida (producto
+                // no encontrado) quedan al final.
+                pickingTareas.forEach(t => {
+                    t.ubicacionSugerida = buscarUbicacionSugerida(t.barcode).ubicacion || '';
+                });
+                pickingTareas.sort((a, b) => {
+                    if (!a.ubicacionSugerida && !b.ubicacionSugerida) return 0;
+                    if (!a.ubicacionSugerida) return 1;
+                    if (!b.ubicacionSugerida) return -1;
+                    return compararCercaniaUbicaciones(a.ubicacionSugerida, b.ubicacionSugerida);
+                });
+
                 pickingIndiceActual = 0;
                 const status = document.getElementById('statusPicking');
                 if (pickingTareas.length === 0) {
                     status.innerText = 'El archivo no tiene tareas con Reestock pendiente (revisa la columna Reestock).';
                     status.style.color = '#ffb300';
                 } else {
-                    status.innerText = `Picking cargado: ${pickingTareas.length} tareas pendientes.`;
+                    status.innerText = `Picking cargado: ${pickingTareas.length} tareas pendientes, ordenadas por ubicación (A-Z, 1-5, 1-4).`;
                     status.style.color = '#66bb6a';
                 }
                 renderizarTareaPickingActual();
@@ -1996,12 +2011,25 @@
             return d.getFullYear() === hoy.getFullYear() && d.getMonth() === hoy.getMonth() && d.getDate() === hoy.getDate();
         }
 
+        // Igual que esHoy, pero también acepta el día calendario anterior. Esto es porque
+        // el picking de una sucursal a veces se hace un día y el de otra sucursal al
+        // siguiente, y ambos deben poder salir juntos en el mismo reporte.
+        function esHoyOAyer(timestamp) {
+            if (!timestamp) return false;
+            const d = new Date(timestamp);
+            const hoy = new Date();
+            const ayer = new Date(hoy);
+            ayer.setDate(hoy.getDate() - 1);
+            const mismoDia = (fecha, ref) => fecha.getFullYear() === ref.getFullYear() && fecha.getMonth() === ref.getMonth() && fecha.getDate() === ref.getDate();
+            return mismoDia(d, hoy) || mismoDia(d, ayer);
+        }
+
         function obtenerPickingHoyPorSucursal() {
             const excluidas = ['DEVOLUCIÓN A PROVEEDOR', 'AJUSTE DE INVENTARIO'];
             const grupos = {};
             historialArray.forEach(m => {
                 if (m.Operacion !== 'Despacho') return;
-                if (!esHoy(m.Timestamp)) return;
+                if (!esHoyOAyer(m.Timestamp)) return;
                 const suc = (m.Sucursal || '').trim();
                 if (!suc) return;
                 if (excluidas.some(ex => ex.toLowerCase() === suc.toLowerCase())) return;
@@ -2075,12 +2103,14 @@
             return filas;
         }
 
-        // Reporte de lo que se pickeó (despachó) HOY, agrupado por sucursal + productividad (sin devolución a proveedor ni ajuste de inventario)
+        // Reporte de lo que se pickeó (despachó) HOY o AYER, agrupado por sucursal + productividad
+        // (sin devolución a proveedor ni ajuste de inventario). Se incluyen ambos días porque a
+        // veces una sucursal se pickea un día y otra sucursal al día siguiente.
         window.exportarPickingHoy = function() {
             const grupos = obtenerPickingHoyPorSucursal();
             const sucursales = Object.keys(grupos).sort();
             if (sucursales.length === 0) {
-                alert('No hay picking (despachos) registrado hoy para ninguna sucursal.');
+                alert('No hay picking (despachos) registrado hoy ni ayer para ninguna sucursal.');
                 return;
             }
 
@@ -2121,18 +2151,18 @@
             });
 
             const hoyStr = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
-            XLSX.writeFile(workbook, `Picking_Hoy_${hoyStr}.xlsx`);
+            XLSX.writeFile(workbook, `Picking_Hoy_y_Ayer_${hoyStr}.xlsx`);
             if (typeof window.marcarReporteDescargadoHoy === 'function') window.marcarReporteDescargadoHoy('picking');
         };
 
         // Excel con la plantilla exacta para hacer la guía: Cantidad, Código de Barras/SKU/N° Serie,
         // Glosa, Atributos adicionales, Valor Unitario, % Descuento, Impuesto (IGV), Costo Neto Glosa.
-        // Se genera una hoja por sucursal, según el picking (despachos) de hoy.
+        // Se genera una hoja por sucursal, según el picking (despachos) de hoy o de ayer.
         window.exportarGuiaHoy = function() {
             const grupos = obtenerPickingHoyPorSucursal();
             const sucursales = Object.keys(grupos).sort();
             if (sucursales.length === 0) {
-                alert('No hay picking (despachos) registrado hoy para ninguna sucursal.');
+                alert('No hay picking (despachos) registrado hoy ni ayer para ninguna sucursal.');
                 return;
             }
 
@@ -2156,7 +2186,7 @@
             });
 
             const hoyStr = new Date().toLocaleDateString('es-PE').replace(/\//g, '-');
-            XLSX.writeFile(workbook, `Guia_Picking_Hoy_${hoyStr}.xlsx`);
+            XLSX.writeFile(workbook, `Guia_Picking_Hoy_y_Ayer_${hoyStr}.xlsx`);
         };
 
         window.renderizarHistorialGlobal = function(dataArray) {
